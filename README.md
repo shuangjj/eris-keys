@@ -10,7 +10,7 @@ Features:
 ## WARNING: This is semi-audited cryptographic software. It should not yet be presumed safe. 
 
 The code is mostly a fork of go-ethereum/crypto. Major changes include removing unecessary code (like supporting other ECDSA curves),
-adding support for ED25519, and using AES-GCM for encryption.
+adding support for ED25519, and using AES-GCM for encryption. And of course the pretty cli and http interfaces :)
 
 # CLI
 
@@ -59,7 +59,3 @@ All arguments and return values that would be byte arrays are presumend hex enco
 
 All methods accept optional `dir` and `auth` keys, which change the base directory the keys are written to/retrieved from, and allows for password based 
 encryption of keys, respectively.
-
-
-
-
