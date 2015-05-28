@@ -37,7 +37,7 @@ Start the daemon with `eris-keys --host localhost --port 12345 daemon`
 There are four end points:
 
 1) `/gen` 
-	- Args: `type`
+	- Args: `type` ("secp256k1", "ed25519")
 	- Return:  newly generated address
 
 2) `/pub`
@@ -52,6 +52,9 @@ There are four end points:
 	- Args: `addr`, `hash`, `sig`
 	- Return: true or false
 
+5) `/hash`
+	- Args: `type` ("sha256", "ripemd160"), `data`
+	- Return: hash value
 
 All arguments are passed as keyed values in the HTTP header. The response is a struct with two strings: a return value and an error.
 

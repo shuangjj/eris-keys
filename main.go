@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	DefaultKeyType = "ed25519"
-	DefaultDir     = utils.Keys
-	DefaultAuth    = ""
+	DefaultKeyType  = "ed25519"
+	DefaultDir      = utils.Keys
+	DefaultAuth     = ""
+	DefaultHashType = "sha256"
 
 	DefaultHost = "localhost"
 	DefaultPort = "4767"
@@ -30,6 +31,7 @@ func main() {
 		signCmd,
 		verifyCmd,
 		pubKeyCmd,
+		hashCmd,
 		serverCmd,
 	}
 
@@ -43,7 +45,7 @@ var (
 		Usage:  "generate a key",
 		Action: cliKeygen,
 		Flags: []cli.Flag{
-			typeFlag,
+			keyTypeFlag,
 			dirFlag,
 			authFlag,
 		},
@@ -54,7 +56,7 @@ var (
 		Usage:  "eris-keys sign <hash> <address>",
 		Action: cliSign,
 		Flags: []cli.Flag{
-			typeFlag,
+			keyTypeFlag,
 			dirFlag,
 			authFlag,
 		},
@@ -65,7 +67,7 @@ var (
 		Usage:  "eris-keys pub <addr>",
 		Action: cliPub,
 		Flags: []cli.Flag{
-			typeFlag,
+			keyTypeFlag,
 			dirFlag,
 			authFlag,
 		},
@@ -76,9 +78,18 @@ var (
 		Usage:  "eris-keys verify <addr> <hash> <sig>",
 		Action: cliVerify,
 		Flags: []cli.Flag{
-			typeFlag,
+			keyTypeFlag,
 			dirFlag,
 			authFlag,
+		},
+	}
+
+	hashCmd = cli.Command{
+		Name:   "hash",
+		Usage:  "eris-keys hash <some data>",
+		Action: cliHash,
+		Flags: []cli.Flag{
+			hashTypeFlag,
 		},
 	}
 
@@ -92,10 +103,16 @@ var (
 		},
 	}
 
-	typeFlag = cli.StringFlag{
+	keyTypeFlag = cli.StringFlag{
 		Name:  "type",
 		Value: DefaultKeyType,
 		Usage: "specify the type of key to create. Supports 'secp256k1' and 'ed25519'",
+	}
+
+	hashTypeFlag = cli.StringFlag{
+		Name:  "type",
+		Value: DefaultHashType,
+		Usage: "specify the hash function to use",
 	}
 
 	dirFlag = cli.StringFlag{

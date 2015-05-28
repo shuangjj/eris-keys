@@ -17,6 +17,7 @@ func ListenAndServe(host, port string) error {
 	mux.HandleFunc("/pub", pubHandler)
 	mux.HandleFunc("/sign", signHandler)
 	mux.HandleFunc("/verify", verifyHandler)
+	mux.HandleFunc("/hash", hashHandler)
 	return http.ListenAndServe(host+":"+port, mux)
 }
 
@@ -110,6 +111,18 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	WriteResult(w, fmt.Sprintf("%v", res))
+}
+
+func hashHandler(w http.ResponseWriter, r *http.Request) {
+	typ, _, _ := typeDirAuth(r)
+	data := r.Header.Get("data")
+
+	hash, err := coreHash(typ, data)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteResult(w, fmt.Sprintf("%X", hash))
 }
 
 // convenience function

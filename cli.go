@@ -48,6 +48,18 @@ func cliPub(c *cli.Context) {
 	fmt.Printf("%x\n", pub)
 }
 
+func cliHash(c *cli.Context) {
+	args := c.Args()
+	if len(args) != 1 {
+		exit(fmt.Errorf("enter something to hash"))
+	}
+	typ := c.String("type")
+	toHash := args[0]
+	hash, err := coreHash(typ, toHash)
+	ifExit(err)
+	fmt.Printf("%x\n", hash)
+}
+
 func cliServer(c *cli.Context) {
 	host, port := c.String("host"), c.String("port")
 	ifExit(ListenAndServe(host, port))

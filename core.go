@@ -1,10 +1,14 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"hash"
+	"io"
 	"path/filepath"
 
+	"code.google.com/p/go.crypto/ripemd160"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
@@ -121,4 +125,19 @@ func corePub(dir, auth, addr string) ([]byte, error) {
 		return nil, fmt.Errorf("error retrieving pub key for %x: %v", addrB, err)
 	}
 	return pub, nil
+}
+
+func coreHash(typ, data string) ([]byte, error) {
+	var hasher hash.Hash
+	switch typ {
+	case "ripemd160":
+		hasher = ripemd160.New()
+	case "sha256":
+		hasher = sha256.New()
+	// case "sha3":
+	default:
+		return nil, fmt.Errorf("Unknown hash type %s", typ)
+	}
+	io.WriteString(hasher, data)
+	return hasher.Sum(nil), nil
 }

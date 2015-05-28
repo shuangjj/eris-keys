@@ -50,7 +50,7 @@ func testServerKeygenAndPub(t *testing.T, typ string) {
 }
 
 func TestServerKeygenAndPub(t *testing.T) {
-	for _, typ := range TYPES {
+	for _, typ := range KEY_TYPES {
 		testServerKeygenAndPub(t, typ)
 	}
 }
@@ -84,8 +84,29 @@ func testServerSignAndVerify(t *testing.T, typ string) {
 }
 
 func TestServerSignAndVerify(t *testing.T) {
-	for _, typ := range TYPES {
+	for _, typ := range KEY_TYPES {
 		testServerSignAndVerify(t, typ)
+	}
+}
+
+func testServerHash(t *testing.T, typ string) {
+	hData := hashData[typ]
+	data, expected := hData.data, hData.expected
+
+	req, _ := http.NewRequest("GET", DefaultAddr+"/hash", nil)
+	req.Header.Add("type", typ)
+	req.Header.Add("data", data)
+	hash, errS, err := requestResponse(req)
+	checkErrs(t, errS, err)
+
+	if hash != expected {
+		t.Fatalf("Hash error for %s. Got %s, expected %s", typ, hash, expected)
+	}
+}
+
+func TestServerHash(t *testing.T) {
+	for _, typ := range HASH_TYPES {
+		testServerHash(t, typ)
 	}
 }
 
