@@ -1,8 +1,8 @@
 package crypto
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto/randentropy"
+	"github.com/eris-ltd/eris-keys/common"
+	"github.com/eris-ltd/eris-keys/crypto/randentropy"
 	"reflect"
 	"testing"
 )
