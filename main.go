@@ -30,6 +30,7 @@ func main() {
 		signCmd,
 		verifyCmd,
 		pubKeyCmd,
+		serverCmd,
 	}
 
 	app.Run(os.Args)
@@ -83,7 +84,7 @@ var (
 
 	serverCmd = cli.Command{
 		Name:   "server",
-		Usage:  "eris-keys daemon",
+		Usage:  "eris-keys server",
 		Action: cliServer,
 		Flags: []cli.Flag{
 			hostFlag,
