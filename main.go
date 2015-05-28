@@ -8,6 +8,16 @@ import (
 	"github.com/eris-ltd/epm-go/utils"
 )
 
+var (
+	DefaultKeyType = "ed25519"
+	DefaultDir     = utils.Keys
+	DefaultAuth    = ""
+
+	DefaultHost = "localhost"
+	DefaultPort = "4767"
+	DefaultAddr = "http://" + DefaultHost + ":" + DefaultPort
+)
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "eris-keys"
@@ -71,15 +81,25 @@ var (
 		},
 	}
 
+	serverCmd = cli.Command{
+		Name:   "server",
+		Usage:  "eris-keys daemon",
+		Action: cliServer,
+		Flags: []cli.Flag{
+			hostFlag,
+			portFlag,
+		},
+	}
+
 	typeFlag = cli.StringFlag{
 		Name:  "type",
-		Value: "secp256k1",
+		Value: DefaultKeyType,
 		Usage: "specify the type of key to create. Supports 'secp256k1' and 'ed25519'",
 	}
 
 	dirFlag = cli.StringFlag{
 		Name:  "dir",
-		Value: utils.Keys,
+		Value: DefaultDir,
 		Usage: "specify the location of the directory containing key files",
 	}
 
@@ -87,6 +107,18 @@ var (
 		Name:  "auth",
 		Value: "",
 		Usage: "a password to be used for encrypting keys",
+	}
+
+	hostFlag = cli.StringFlag{
+		Name:  "host",
+		Value: DefaultHost,
+		Usage: "set the host for key daemon to listen on",
+	}
+
+	portFlag = cli.StringFlag{
+		Name:  "port",
+		Value: DefaultPort,
+		Usage: "set the port for key daemon to listen on",
 	}
 )
 

@@ -47,3 +47,8 @@ func cliPub(c *cli.Context) {
 	ifExit(err)
 	fmt.Printf("%x\n", pub)
 }
+
+func cliServer(c *cli.Context) {
+	host, port := c.String("host"), c.String("port")
+	ifExit(ListenAndServe(host, port))
+}
