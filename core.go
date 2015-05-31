@@ -12,6 +12,8 @@ import (
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
+// TODO: overwrite all mem buffers/registers?
+
 func newKeyStore(dir, auth string) (keyStore crypto.KeyStore, err error) {
 	dir, err = filepath.Abs(dir)
 	if err != nil {
@@ -26,6 +28,34 @@ func newKeyStore(dir, auth string) (keyStore crypto.KeyStore, err error) {
 	return
 }
 
+func coreImport(dir, auth, keyType, keyHex string) ([]byte, error) {
+	keyStore, err := newKeyStore(dir, auth)
+	if err != nil {
+		return nil, err
+	}
+
+	keyBytes, err := hex.DecodeString(keyHex)
+	if err != nil {
+		return nil, fmt.Errorf("private key is invalid hex: %v", err)
+	}
+
+	keyT, err := crypto.KeyTypeFromString(keyType)
+	if err != nil {
+		return nil, err
+	}
+	key, err := crypto.NewKeyFromPriv(keyT, keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// store the new key
+	if err = keyStore.StoreKey(key, auth); err != nil {
+		return nil, err
+	}
+
+	return key.Address, nil
+}
+
 func coreKeygen(dir, auth, keyType string) ([]byte, error) {
 	keyStore, err := newKeyStore(dir, auth)
 	if err != nil {
@@ -33,16 +63,11 @@ func coreKeygen(dir, auth, keyType string) ([]byte, error) {
 	}
 
 	var key *crypto.Key
-	switch keyType {
-	case "secp256k1", "ethereum", "thelonious":
-		// TODO: deal with bitcoin (different address gen mechanism)
-		key, err = keyStore.GenerateNewKey(crypto.KeyTypeSecp256k1, auth)
-	case "ed25519", "tendermint":
-		key, err = keyStore.GenerateNewKey(crypto.KeyTypeEd25519, auth)
-	default:
-		err = fmt.Errorf("unknown key type: %s", keyType)
+	keyT, err := crypto.KeyTypeFromString(keyType)
+	if err != nil {
+		return nil, err
 	}
-	//TODO: oveerwrite priv, auth
+	key, err = keyStore.GenerateNewKey(keyT, auth)
 	if err != nil {
 		return nil, fmt.Errorf("error generating key %s %s", keyType, err)
 	}

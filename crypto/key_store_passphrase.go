@@ -187,7 +187,7 @@ func DecryptKey(ks keyStorePassphrase, keyAddr []byte, auth string) (*Key, error
 	err = json.Unmarshal(fileContent, keyProtected)
 
 	keyId := keyProtected.Id
-	keyType, err := keyTypeFromString(keyProtected.Type)
+	keyType, err := KeyTypeFromString(keyProtected.Type)
 	if err != nil {
 		return nil, err
 	}

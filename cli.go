@@ -9,7 +9,7 @@ func cliKeygen(c *cli.Context) {
 	dir, auth, keyType := c.String("dir"), c.String("auth"), c.String("type")
 	addr, err := coreKeygen(dir, auth, keyType)
 	ifExit(err)
-	fmt.Printf("%x\n", addr)
+	fmt.Printf("%X\n", addr)
 }
 
 func cliSign(c *cli.Context) {
@@ -21,7 +21,7 @@ func cliSign(c *cli.Context) {
 	hash, addr := args[0], args[1]
 	sig, err := coreSign(dir, auth, hash, addr)
 	ifExit(err)
-	fmt.Printf("%x\n", sig)
+	fmt.Printf("%X\n", sig)
 }
 
 func cliVerify(c *cli.Context) {
@@ -45,7 +45,7 @@ func cliPub(c *cli.Context) {
 	addr := args[0]
 	pub, err := corePub(dir, auth, addr)
 	ifExit(err)
-	fmt.Printf("%x\n", pub)
+	fmt.Printf("%X\n", pub)
 }
 
 func cliHash(c *cli.Context) {
@@ -57,10 +57,25 @@ func cliHash(c *cli.Context) {
 	toHash := args[0]
 	hash, err := coreHash(typ, toHash)
 	ifExit(err)
-	fmt.Printf("%x\n", hash)
+	fmt.Printf("%X\n", hash)
 }
 
 func cliServer(c *cli.Context) {
 	host, port := c.String("host"), c.String("port")
 	ifExit(ListenAndServe(host, port))
+}
+
+func cliImport(c *cli.Context) {
+	args := c.Args()
+	if len(args) != 1 {
+		exit(fmt.Errorf("enter a private key or filename"))
+	}
+	auth, dir := c.String("auth"), c.String("dir")
+	typ := c.String("type")
+	key := args[0]
+
+	addr, err := coreImport(dir, auth, typ, key)
+	ifExit(err)
+	fmt.Printf("%X\n", addr)
+
 }

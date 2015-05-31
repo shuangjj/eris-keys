@@ -33,6 +33,7 @@ func main() {
 		pubKeyCmd,
 		hashCmd,
 		serverCmd,
+		importCmd,
 	}
 
 	app.Run(os.Args)
@@ -103,6 +104,16 @@ var (
 		},
 	}
 
+	importCmd = cli.Command{
+		Name:   "import",
+		Usage:  "eris-keys import <priv key>",
+		Action: cliImport,
+		Flags: []cli.Flag{
+			keyTypeFlag,
+			dirFlag,
+			authFlag,
+		},
+	}
 	keyTypeFlag = cli.StringFlag{
 		Name:  "type",
 		Value: DefaultKeyType,

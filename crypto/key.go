@@ -53,7 +53,7 @@ func (k KeyType) String() string {
 	}
 }
 
-func keyTypeFromString(s string) (KeyType, error) {
+func KeyTypeFromString(s string) (KeyType, error) {
 	switch s {
 	case "secp256k1":
 		return KeyTypeSecp256k1, nil
@@ -90,6 +90,17 @@ func NewKey(typ KeyType) (*Key, error) {
 		return newKeySecp256k1(), nil
 	case KeyTypeEd25519:
 		return newKeyEd25519(), nil
+	default:
+		return nil, fmt.Errorf("Unknown key type: %v", typ)
+	}
+}
+
+func NewKeyFromPriv(typ KeyType, priv []byte) (*Key, error) {
+	switch typ {
+	case KeyTypeSecp256k1:
+		return keyFromPrivSecp256k1(priv)
+	case KeyTypeEd25519:
+		return keyFromPrivEd25519(priv)
 	default:
 		return nil, fmt.Errorf("Unknown key type: %v", typ)
 	}
@@ -177,7 +188,7 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 		return err
 	}
 	k.PrivateKey = keyJSON.PrivateKey
-	k.Type, err = keyTypeFromString(keyJSON.Type)
+	k.Type, err = KeyTypeFromString(keyJSON.Type)
 
 	return err
 }
@@ -197,9 +208,27 @@ func newKeySecp256k1() *Key {
 }
 
 func newKeyEd25519() *Key {
-	privKeyBytes := new([64]byte)
 	randBytes := randentropy.GetEntropyMixed(32)
-	copy(privKeyBytes[:32], randBytes)
+	key, _ := keyFromPrivEd25519(randBytes)
+	return key
+}
+
+func keyFromPrivSecp256k1(priv []byte) (*Key, error) {
+	pub, err := secp256k1.GeneratePubKey(priv)
+	if err != nil {
+		return nil, err
+	}
+	return &Key{
+		Id:         uuid.NewRandom(),
+		Type:       KeyTypeSecp256k1,
+		Address:    Sha3(pub[1:])[12:],
+		PrivateKey: priv,
+	}, nil
+}
+
+func keyFromPrivEd25519(priv []byte) (*Key, error) {
+	privKeyBytes := new([64]byte)
+	copy(privKeyBytes[:32], priv)
 	pubKeyBytes := ed25519.MakePublicKey(privKeyBytes)
 	pubKey := account.PubKeyEd25519(pubKeyBytes[:])
 	return &Key{
@@ -207,7 +236,7 @@ func newKeyEd25519() *Key {
 		Type:       KeyTypeEd25519,
 		Address:    pubKey.Address(),
 		PrivateKey: privKeyBytes[:],
-	}
+	}, nil
 }
 
 func pubKeySecp256k1(k *Key) ([]byte, error) {
