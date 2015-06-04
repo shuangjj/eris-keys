@@ -20,6 +20,13 @@ var (
 )
 
 func main() {
+
+	app := DefineApp()
+	app.Run(os.Args)
+
+}
+
+func DefineApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eris-keys"
 	app.Usage = "Generate and manage keys for producing signatures"
@@ -35,9 +42,7 @@ func main() {
 		serverCmd,
 		importCmd,
 	}
-
-	app.Run(os.Args)
-
+	return app
 }
 
 var (
