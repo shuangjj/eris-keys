@@ -1,11 +1,11 @@
 package crypto
 
 import (
-	"bytes"
-	"encoding/hex"
+	// "bytes"
+	// "encoding/hex"
 	"fmt"
 	"testing"
-	"time"
+	// "time"
 
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
 )

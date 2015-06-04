@@ -1,0 +1,50 @@
+machine:
+  services:
+    - docker
+
+  post:
+    - rm -rf ${GOPATH%%:*}/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+    - mkdir -p ${GOPATH%%:*}/src/github.com/${CIRCLE_PROJECT_USERNAME}
+    - cp -r ${HOME}/${CIRCLE_PROJECT_REPONAME} ${GOPATH%%:*}/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}
+    - git config --global user.email "billings@erisindustries.com"
+    - git config --global user.name "Billings the Bot"
+
+dependencies:
+  override:
+    - "cd ${GOPATH%%:*}/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} && go install"
+
+test:
+  override:
+    - go test ./...
+
+deployment:
+  master:
+    branch: master
+    commands:
+      # Build Docker
+      - docker build -t eris/keys .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push eris/keys
+
+      # Publish Documentation & Specs
+      - mkdir -p docs/eris-keys
+      # - go run docs/generator.go
+      # - "cd ~ && git clone git@github.com:eris-ltd/docs.erisindustries.com.git"
+      # - "rsync -av docs/eris-keys ~/docs.erisindustries.com/documentation/"
+      # - >
+      #     cd ~/docs.erisindustries.com;
+      #     if [ -z "$(git status --porcelain)" ]; then
+      #       echo "All Good!"
+      #     else
+      #       git add -A :/ &&
+      #       git commit -m "eris-keys build number $CIRCLE_BUILD_NUM doc generation" &&
+      #       git push origin master
+      #     fi
+
+  develop:
+    branch: develop
+    commands:
+      # Build Docker
+      - docker build -t eris/keys:unstable .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push eris/keys

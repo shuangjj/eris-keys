@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
 
 //------------------------------------------------------------------------
@@ -18,6 +19,12 @@ func ListenAndServe(host, port string) error {
 	mux.HandleFunc("/sign", signHandler)
 	mux.HandleFunc("/verify", verifyHandler)
 	mux.HandleFunc("/hash", hashHandler)
+	if os.Getenv("ERIS_KEYS_HOST") != "" {
+		host = os.Getenv("ERIS_KEYS_HOST")
+	}
+	if os.Getenv("ERIS_KEYS_PORT") != "" {
+		port = os.Getenv("ERIS_KEYS_PORT")
+	}
 	return http.ListenAndServe(host+":"+port, mux)
 }
 

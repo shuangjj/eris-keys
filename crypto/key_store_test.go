@@ -1,16 +1,23 @@
 package crypto
 
 import (
-	"github.com/eris-ltd/eris-keys/common"
+	"io/ioutil"
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
 	"reflect"
 	"testing"
 )
 
 func TestKeyStorePlain(t *testing.T) {
-	ks := NewKeyStorePlain(common.DefaultDataDir())
+	dir, err := ioutil.TempDir("", "eris_keys_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ks := NewKeyStorePlain(dir)
 	pass := "" // not used but required by API
-	k1, err := ks.GenerateNewKey(randentropy.Reader, pass)
+
+	k1 := new(Key)
+	k1, err = ks.GenerateNewKey(randentropy.Reader, pass)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,9 +43,16 @@ func TestKeyStorePlain(t *testing.T) {
 }
 
 func TestKeyStorePassphrase(t *testing.T) {
-	ks := NewKeyStorePassphrase(common.DefaultDataDir())
+	dir, err := ioutil.TempDir("", "eris_keys_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ks := NewKeyStorePlain(dir)
 	pass := "foo"
-	k1, err := ks.GenerateNewKey(randentropy.Reader, pass)
+
+	k1 := new(Key)
+	k1, err = ks.GenerateNewKey(randentropy.Reader, pass)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,9 +76,16 @@ func TestKeyStorePassphrase(t *testing.T) {
 }
 
 func TestKeyStorePassphraseDecryptionFail(t *testing.T) {
-	ks := NewKeyStorePassphrase(common.DefaultDataDir())
+	dir, err := ioutil.TempDir("", "eris_keys_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ks := NewKeyStorePlain(dir)
 	pass := "foo"
-	k1, err := ks.GenerateNewKey(randentropy.Reader, pass)
+
+	k1 := new(Key)
+	k1, err = ks.GenerateNewKey(randentropy.Reader, pass)
 	if err != nil {
 		t.Fatal(err)
 	}
