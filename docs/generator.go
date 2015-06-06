@@ -9,7 +9,7 @@ import (
 	// "sort"
 	"strings"
 
-	ek "github.com/eris-ltd/eris-keys"
+	ekcmds "github.com/eris-ltd/eris-keys/commands"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 )
@@ -197,7 +197,7 @@ func GenerateSpecs(dir string) []string {
 
 func main() {
 	os.MkdirAll(RENDER_DIR, 0775)
-	eris := ek.DefineApp().Commands
+	eris := ekcmds.DefineApp().Commands
 	specs := GenerateSpecs(SPECS_DIR)
 	for _, e := range eris {
 		GenerateTree(&e, RENDER_DIR, specs)
