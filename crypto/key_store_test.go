@@ -1,86 +1,97 @@
 package crypto
 
 import (
-	"github.com/eris-ltd/eris-keys/common"
-	"github.com/eris-ltd/eris-keys/crypto/randentropy"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
 	"reflect"
 	"testing"
 )
 
 func TestKeyStorePlain(t *testing.T) {
-	ks := NewKeyStorePlain(common.DefaultDataDir())
-	pass := "" // not used but required by API
-	k1, err := ks.GenerateNewKey(randentropy.Reader, pass)
-	if err != nil {
-		t.Fatal(err)
-	}
+	ks := NewKeyStorePlain(common.Keys)
+	f := func(typ KeyType) {
+		pass := "" // not used but required by API
+		k1, err := ks.GenerateNewKey(typ, pass)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	k2 := new(Key)
-	k2, err = ks.GetKey(k1.Address, pass)
-	if err != nil {
-		t.Fatal(err)
-	}
+		k2 := new(Key)
+		k2, err = ks.GetKey(k1.Address, pass)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if !reflect.DeepEqual(k1.Address, k2.Address) {
-		t.Fatal(err)
-	}
+		if !reflect.DeepEqual(k1.Address, k2.Address) {
+			t.Fatal(err)
+		}
 
-	if !reflect.DeepEqual(k1.PrivateKey, k2.PrivateKey) {
-		t.Fatal(err)
-	}
+		if !reflect.DeepEqual(k1.PrivateKey, k2.PrivateKey) {
+			t.Fatal(err)
+		}
 
-	err = ks.DeleteKey(k2.Address, pass)
-	if err != nil {
-		t.Fatal(err)
+		err = ks.DeleteKey(k2.Address, pass)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
+	f(KeyTypeSecp256k1)
+	f(KeyTypeEd25519)
 }
 
 func TestKeyStorePassphrase(t *testing.T) {
-	ks := NewKeyStorePassphrase(common.DefaultDataDir())
-	pass := "foo"
-	k1, err := ks.GenerateNewKey(randentropy.Reader, pass)
-	if err != nil {
-		t.Fatal(err)
-	}
-	k2 := new(Key)
-	k2, err = ks.GetKey(k1.Address, pass)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(k1.Address, k2.Address) {
-		t.Fatal(err)
-	}
+	ks := NewKeyStorePassphrase(common.Keys)
+	f := func(typ KeyType) {
+		pass := "foo"
+		k1, err := ks.GenerateNewKey(typ, pass)
+		if err != nil {
+			t.Fatal(err)
+		}
+		k2 := new(Key)
+		k2, err = ks.GetKey(k1.Address, pass)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(k1.Address, k2.Address) {
+			t.Fatal(err)
+		}
 
-	if !reflect.DeepEqual(k1.PrivateKey, k2.PrivateKey) {
-		t.Fatal(err)
-	}
+		if !reflect.DeepEqual(k1.PrivateKey, k2.PrivateKey) {
+			t.Fatal(err)
+		}
 
-	err = ks.DeleteKey(k2.Address, pass) // also to clean up created files
-	if err != nil {
-		t.Fatal(err)
+		err = ks.DeleteKey(k2.Address, pass) // also to clean up created files
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
+	f(KeyTypeSecp256k1)
+	f(KeyTypeEd25519)
 }
 
 func TestKeyStorePassphraseDecryptionFail(t *testing.T) {
-	ks := NewKeyStorePassphrase(common.DefaultDataDir())
+	ks := NewKeyStorePassphrase(common.Keys)
 	pass := "foo"
-	k1, err := ks.GenerateNewKey(randentropy.Reader, pass)
-	if err != nil {
-		t.Fatal(err)
-	}
+	f := func(typ KeyType) {
+		k1, err := ks.GenerateNewKey(KeyTypeSecp256k1, pass)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	_, err = ks.GetKey(k1.Address, "bar") // wrong passphrase
-	if err == nil {
-		t.Fatal(err)
-	}
+		_, err = ks.GetKey(k1.Address, "bar") // wrong passphrase
+		if err == nil {
+			t.Fatal(err)
+		}
 
-	err = ks.DeleteKey(k1.Address, "bar") // wrong passphrase
-	if err == nil {
-		t.Fatal(err)
-	}
+		err = ks.DeleteKey(k1.Address, "bar") // wrong passphrase
+		if err == nil {
+			t.Fatal(err)
+		}
 
-	err = ks.DeleteKey(k1.Address, pass) // to clean up
-	if err != nil {
-		t.Fatal(err)
+		err = ks.DeleteKey(k1.Address, pass) // to clean up
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
+	f(KeyTypeSecp256k1)
+	f(KeyTypeEd25519)
 }

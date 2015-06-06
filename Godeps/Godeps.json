@@ -1,0 +1,114 @@
+{
+	"ImportPath": "github.com/eris-ltd/eris-keys",
+	"GoVersion": "go1.4.2",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/go-uuid/uuid",
+			"Comment": "null-15",
+			"Rev": "35bc42037350f0078e3c974c6ea690f1926603ab"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.crypto/curve25519",
+			"Comment": "null-236",
+			"Rev": "69e2a90ed92d03812364aeb947b7068dc42e561e"
+		},
+		{
+			"ImportPath": "code.google.com/p/go.crypto/ripemd160",
+			"Comment": "null-236",
+			"Rev": "69e2a90ed92d03812364aeb947b7068dc42e561e"
+		},
+		{
+			"ImportPath": "github.com/agl/ed25519",
+			"Rev": "d2b94fd789ea21d12fac1a4443dd3a3f79cda72c"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-106-ga889873",
+			"Rev": "a889873af50a499d060097216dcdbcc26ed09e7c"
+		},
+		{
+			"ImportPath": "github.com/eris-ltd/common",
+			"Rev": "09646e0cc875bc60cc93acf4d3dec99da59ebe36"
+		},
+		{
+			"ImportPath": "github.com/eris-ltd/epm-go/utils",
+			"Comment": "v0.8-249-g135a4c7",
+			"Rev": "135a4c78397584ed437685ac525868af838ea75c"
+		},
+		{
+			"ImportPath": "github.com/eris-ltd/thelonious/monklog",
+			"Comment": "v0.8-84-g0841a77",
+			"Rev": "0841a77cc857724301341d0dc21cd323efaa9972"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/log15/stack",
+			"Comment": "v2.3-38-g352fceb",
+			"Rev": "352fceb48e895bd1dd0b9f5d3ae8f8516c49af0f"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/log15/term",
+			"Comment": "v2.3-38-g352fceb",
+			"Rev": "352fceb48e895bd1dd0b9f5d3ae8f8516c49af0f"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Rev": "043ae16291351db8465272edf465c9f388161627"
+		},
+		{
+			"ImportPath": "github.com/syndtr/goleveldb/leveldb",
+			"Rev": "63c9e642efad852f49e20a6f90194cae112fd2ac"
+		},
+		{
+			"ImportPath": "github.com/syndtr/gosnappy/snappy",
+			"Rev": "ce8acff4829e0c2458a67ead32390ac0a381c862"
+		},
+		{
+			"ImportPath": "github.com/tendermint/ed25519",
+			"Rev": "533fb6548e2071076888eda3c38749d707ba49bc"
+		},
+		{
+			"ImportPath": "github.com/tendermint/log15",
+			"Comment": "v2.3-33-g105a1be",
+			"Rev": "105a1beefe3379227a0d61733a29fd2c34f7080c"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/account",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/binary",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/common",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/config",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/db",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/logger",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "github.com/tendermint/tendermint/merkle",
+			"Rev": "46bd0e5d51692347647bb2e250fd0e637fc63a11"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/pbkdf2",
+			"Rev": "4ed45ec682102c643324fae5dff8dab085b6c300"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/scrypt",
+			"Rev": "4ed45ec682102c643324fae5dff8dab085b6c300"
+		}
+	]
+}

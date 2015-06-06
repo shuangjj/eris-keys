@@ -30,11 +30,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/ed25519"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
-	"github.com/tendermint/ed25519"
-	"github.com/tendermint/tendermint/account"
 )
 
 //-----------------------------------------------------------------------------
