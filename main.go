@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/codegangsta/cli"
-	"github.com/eris-ltd/epm-go/utils"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/epm-go/utils"
 )
 
 var (

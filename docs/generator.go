@@ -11,13 +11,13 @@ import (
 
 	ek "github.com/eris-ltd/eris-keys"
 
-	"github.com/codegangsta/cli"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 )
 
 const (
-	RENDER_DIR = "./docs/eris-keys/"
-	SPECS_DIR = "./specs/"
-	BASE_URL = "https://docs.erisindustries.com/documentation/eris-keys/"
+	RENDER_DIR   = "./docs/eris-keys/"
+	SPECS_DIR    = "./specs/"
+	BASE_URL     = "https://docs.erisindustries.com/documentation/eris-keys/"
 	FRONT_MATTER = `---
 
 layout:     content

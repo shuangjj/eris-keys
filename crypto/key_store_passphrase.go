@@ -83,13 +83,12 @@ import (
 	"os"
 	"path"
 
-	"code.google.com/p/go-uuid/uuid"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/scrypt" // 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
-	"golang.org/x/crypto/scrypt"
 )
 
 const (
-	// 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
 	scryptN     = 1 << 18
 	scryptr     = 8
 	scryptp     = 1

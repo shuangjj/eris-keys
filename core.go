@@ -8,7 +8,7 @@ import (
 	"io"
 	"path/filepath"
 
-	"code.google.com/p/go.crypto/ripemd160"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/codegangsta/cli"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 )
 
 func cliKeygen(c *cli.Context) {
