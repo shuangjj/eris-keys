@@ -20,4 +20,5 @@ USER $user
 # Final Config
 VOLUME "/home/eris/.eris/keys"
 EXPOSE 4767
-CMD [ "eris-keys", "server" ]
+ENTRYPOINT ["eris-keys"]
+CMD ["server"]
