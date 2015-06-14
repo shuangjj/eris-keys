@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/eris-ltd/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
 )
 
 var (
@@ -17,6 +17,8 @@ var (
 	DefaultHost = "localhost"
 	DefaultPort = "4767"
 	DefaultAddr = "http://" + DefaultHost + ":" + DefaultPort
+	TestPort    = "7674"
+	TestAddr    = "http://" + DefaultHost + ":" + TestPort
 )
 
 func DefineApp() *cli.App {

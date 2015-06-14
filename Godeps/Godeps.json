@@ -34,16 +34,6 @@
 			"Rev": "09646e0cc875bc60cc93acf4d3dec99da59ebe36"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/epm-go/utils",
-			"Comment": "v0.8-249-g135a4c7",
-			"Rev": "135a4c78397584ed437685ac525868af838ea75c"
-		},
-		{
-			"ImportPath": "github.com/eris-ltd/thelonious/monklog",
-			"Comment": "v0.8-84-g0841a77",
-			"Rev": "0841a77cc857724301341d0dc21cd323efaa9972"
-		},
-		{
 			"ImportPath": "github.com/inconshreveable/log15/stack",
 			"Comment": "v2.3-38-g352fceb",
 			"Rev": "352fceb48e895bd1dd0b9f5d3ae8f8516c49af0f"

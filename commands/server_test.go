@@ -17,7 +17,7 @@ import (
 func init() {
 	failedCh := make(chan error)
 	go func() {
-		err := ListenAndServe(DefaultHost, DefaultPort)
+		err := ListenAndServe(DefaultHost, TestPort)
 		failedCh <- err
 	}()
 	tick := time.NewTicker(time.Second)
@@ -32,12 +32,12 @@ func init() {
 // tests are identical to core_test.go but through the http calls instead of the core functions
 
 func testServerKeygenAndPub(t *testing.T, typ string) {
-	req, _ := http.NewRequest("GET", DefaultAddr+"/gen", nil)
+	req, _ := http.NewRequest("GET", TestAddr+"/gen", nil)
 	req.Header.Add("type", typ)
 	addr, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
-	req, _ = http.NewRequest("GET", DefaultAddr+"/pub", nil)
+	req, _ = http.NewRequest("GET", TestAddr+"/pub", nil)
 	req.Header.Add("addr", addr)
 	pub, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
@@ -56,20 +56,20 @@ func TestServerKeygenAndPub(t *testing.T) {
 }
 
 func testServerSignAndVerify(t *testing.T, typ string) {
-	req, _ := http.NewRequest("GET", DefaultAddr+"/gen", nil)
+	req, _ := http.NewRequest("GET", TestAddr+"/gen", nil)
 	req.Header.Add("type", typ)
 	addr, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
 	hash := crypto.Sha3([]byte("the hash of something!"))
 
-	req, _ = http.NewRequest("GET", DefaultAddr+"/sign", nil)
+	req, _ = http.NewRequest("GET", TestAddr+"/sign", nil)
 	req.Header.Add("hash", toHex(hash))
 	req.Header.Add("addr", addr)
 	sig, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
-	req, _ = http.NewRequest("GET", DefaultAddr+"/verify", nil)
+	req, _ = http.NewRequest("GET", TestAddr+"/verify", nil)
 	req.Header.Add("hash", toHex(hash))
 	req.Header.Add("addr", addr)
 	req.Header.Add("sig", sig)
@@ -93,7 +93,7 @@ func testServerHash(t *testing.T, typ string) {
 	hData := hashData[typ]
 	data, expected := hData.data, hData.expected
 
-	req, _ := http.NewRequest("GET", DefaultAddr+"/hash", nil)
+	req, _ := http.NewRequest("GET", TestAddr+"/hash", nil)
 	req.Header.Add("type", typ)
 	req.Header.Add("data", data)
 	hash, errS, err := requestResponse(req)
