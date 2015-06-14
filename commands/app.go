@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/eris-ltd/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/epm-go/utils"
 )
 
 var (
 	DefaultKeyType  = "ed25519"
-	DefaultDir      = utils.Keys
+	DefaultDir      = common.Keys
 	DefaultAuth     = ""
 	DefaultHashType = "sha256"
 

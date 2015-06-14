@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/epm-go/utils"
+	"github.com/eris-ltd/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
 	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/binary"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
 var (
-	DIR        = utils.Scratch
+	DIR        = common.Scratch
 	AUTH       = ""
 	KEY_TYPES  = []string{"secp256k1", "ed25519"}
 	HASH_TYPES = []string{"sha256", "ripemd160"}
