@@ -21,4 +21,4 @@ USER $user
 VOLUME "/home/eris/.eris/keys"
 EXPOSE 4767
 ENTRYPOINT ["eris-keys"]
-CMD ["server"]
+CMD ["server", "--host", "0.0.0.0"]
