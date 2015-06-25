@@ -15,7 +15,7 @@ WORKDIR /go/src/$repository/
 RUN go get ./... && go install
 
 WORKDIR /home/eris/
-USER $user
+USER $USER
 
 # Final Config
 VOLUME "/home/eris/.eris/keys"
