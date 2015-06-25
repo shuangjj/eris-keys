@@ -5,8 +5,27 @@ import (
 	"crypto/cipher"
 	"fmt"
 	//"golang.org/x/crypto/pbkdf2"
+	"crypto/sha256"
 	"github.com/eris-ltd/eris-keys/crypto/sha3"
+
+	"code.google.com/p/go.crypto/ripemd160"
 )
+
+func Ripemd160(data ...[]byte) []byte {
+	d := ripemd160.New()
+	for _, b := range data {
+		d.Write(b)
+	}
+	return d.Sum(nil)
+}
+
+func Sha256(data ...[]byte) []byte {
+	d := sha256.New()
+	for _, b := range data {
+		d.Write(b)
+	}
+	return d.Sum(nil)
+}
 
 func Sha3(data ...[]byte) []byte {
 	d := sha3.NewKeccak256()

@@ -35,7 +35,7 @@ import (
 )
 
 type KeyStore interface {
-	GenerateNewKey(typ KeyType, auth string) (*Key, error)
+	GenerateNewKey(tpy KeyType, auth string) (*Key, error)
 	GetKey(addr []byte, auth string) (*Key, error)
 	GetAllAddresses() ([][]byte, error)
 	StoreKey(key *Key, auth string) error

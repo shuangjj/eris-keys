@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	DefaultKeyType  = "ed25519"
+	DefaultKeyType  = "ed25519,ripemd160"
 	DefaultDir      = common.Keys
 	DefaultAuth     = ""
 	DefaultHashType = "sha256"
@@ -57,7 +57,6 @@ var (
 		Usage:  "eris-keys sign <hash> <address>",
 		Action: cliSign,
 		Flags: []cli.Flag{
-			keyTypeFlag,
 			dirFlag,
 			authFlag,
 		},
@@ -68,7 +67,6 @@ var (
 		Usage:  "eris-keys pub <addr>",
 		Action: cliPub,
 		Flags: []cli.Flag{
-			keyTypeFlag,
 			dirFlag,
 			authFlag,
 		},
@@ -79,7 +77,6 @@ var (
 		Usage:  "eris-keys verify <addr> <hash> <sig>",
 		Action: cliVerify,
 		Flags: []cli.Flag{
-			keyTypeFlag,
 			dirFlag,
 			authFlag,
 		},
@@ -114,10 +111,11 @@ var (
 			authFlag,
 		},
 	}
+
 	keyTypeFlag = cli.StringFlag{
 		Name:  "type",
 		Value: DefaultKeyType,
-		Usage: "specify the type of key to create. Supports 'secp256k1' and 'ed25519'",
+		Usage: "specify the type of key to create. Supports 'secp256k1,sha3' (ethereum),  'secp256k1,ripemd160sha2' (bitcoin), 'ed25519,ripemd160' (tendermint)",
 	}
 
 	hashTypeFlag = cli.StringFlag{

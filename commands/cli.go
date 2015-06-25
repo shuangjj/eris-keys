@@ -71,10 +71,10 @@ func cliImport(c *cli.Context) {
 		exit(fmt.Errorf("enter a private key or filename"))
 	}
 	auth, dir := c.String("auth"), c.String("dir")
-	typ := c.String("type")
+	keyType := c.String("type")
 	key := args[0]
 
-	addr, err := coreImport(dir, auth, typ, key)
+	addr, err := coreImport(dir, auth, keyType, key)
 	ifExit(err)
 	fmt.Printf("%X\n", addr)
 
