@@ -24,7 +24,7 @@ func DefineApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eris-keys"
 	app.Usage = "Generate and manage keys for producing signatures"
-	app.Version = "0.0.1"
+	app.Version = "0.1.0"
 	app.Author = "Ethan Buchman"
 	app.Email = "ethan@erisindustries.com"
 	app.Commands = []cli.Command{
