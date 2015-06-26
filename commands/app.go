@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
@@ -36,6 +35,7 @@ func DefineApp() *cli.App {
 		hashCmd,
 		serverCmd,
 		importCmd,
+		nameCmd,
 	}
 	return app
 }
@@ -49,36 +49,54 @@ var (
 			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
+		},
+	}
+
+	nameCmd = cli.Command{
+		Name:   "name",
+		Usage:  "manage key names. `eris-keys name <name> <address>`",
+		Action: cliName,
+		Flags: []cli.Flag{
+			dirFlag,
+			rmFlag,
+			lsFlag,
 		},
 	}
 
 	signCmd = cli.Command{
 		Name:   "sign",
-		Usage:  "eris-keys sign <hash> <address>",
+		Usage:  "eris-keys sign --addr <address> <hash>",
 		Action: cliSign,
 		Flags: []cli.Flag{
 			dirFlag,
 			authFlag,
+			nameFlag,
+			addrFlag,
 		},
 	}
 
 	pubKeyCmd = cli.Command{
 		Name:   "pub",
-		Usage:  "eris-keys pub <addr>",
+		Usage:  "eris-keys pub --addr <addr>",
 		Action: cliPub,
 		Flags: []cli.Flag{
 			dirFlag,
 			authFlag,
+			nameFlag,
+			addrFlag,
 		},
 	}
 
 	verifyCmd = cli.Command{
 		Name:   "verify",
-		Usage:  "eris-keys verify <addr> <hash> <sig>",
+		Usage:  "eris-keys verify --addr <addr> <hash> <sig>",
 		Action: cliVerify,
 		Flags: []cli.Flag{
 			dirFlag,
 			authFlag,
+			nameFlag,
+			addrFlag,
 		},
 	}
 
@@ -109,6 +127,7 @@ var (
 			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
 		},
 	}
 
@@ -136,6 +155,18 @@ var (
 		Usage: "a password to be used for encrypting keys",
 	}
 
+	addrFlag = cli.StringFlag{
+		Name:  "addr",
+		Value: "",
+		Usage: "address of key to use",
+	}
+
+	nameFlag = cli.StringFlag{
+		Name:  "name",
+		Value: "",
+		Usage: "name of key to use",
+	}
+
 	hostFlag = cli.StringFlag{
 		Name:  "host",
 		Value: DefaultHost,
@@ -147,17 +178,24 @@ var (
 		Value: DefaultPort,
 		Usage: "set the port for key daemon to listen on",
 	}
-)
 
-func exit(err error) {
-	fmt.Println(err)
-	os.Exit(1)
-}
-
-func ifExit(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	rmFlag = cli.BoolFlag{
+		Name:  "rm",
+		Usage: "remove a key's name",
 	}
 
+	lsFlag = cli.BoolFlag{
+		Name:  "ls",
+		Usage: "list all <name>:<address> pairs",
+	}
+)
+
+func checkMakeDataDir(dir string) error {
+	if _, err := os.Stat(dir); err != nil {
+		err = os.MkdirAll(dir, 0700)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

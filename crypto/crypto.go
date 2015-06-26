@@ -8,7 +8,7 @@ import (
 	"crypto/sha256"
 	"github.com/eris-ltd/eris-keys/crypto/sha3"
 
-	"code.google.com/p/go.crypto/ripemd160"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
 )
 
 func Ripemd160(data ...[]byte) []byte {

@@ -6,16 +6,41 @@ import (
 	"fmt"
 	"hash"
 	"io"
+	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
+//-----
+
+func returnDataDir(dir string) (string, error) {
+	dir = path.Join(dir, "data")
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+	return dir, checkMakeDataDir(dir)
+}
+
+func returnNamesDir(dir string) (string, error) {
+	dir = path.Join(dir, "names")
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return "", err
+	}
+	return dir, checkMakeDataDir(dir)
+}
+
+//-----
+
 // TODO: overwrite all mem buffers/registers?
 
 func newKeyStore(dir, auth string) (keyStore crypto.KeyStore, err error) {
-	dir, err = filepath.Abs(dir)
+	dir, err = returnDataDir(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -27,6 +52,8 @@ func newKeyStore(dir, auth string) (keyStore crypto.KeyStore, err error) {
 	}
 	return
 }
+
+//----------------------------------------------------------------
 
 func coreImport(dir, auth, keyType, keyHex string) ([]byte, error) {
 	keyStore, err := newKeyStore(dir, auth)
@@ -165,4 +192,55 @@ func coreHash(typ, data string) ([]byte, error) {
 	}
 	io.WriteString(hasher, data)
 	return hasher.Sum(nil), nil
+}
+
+//----------------------------------------------------------------
+// manage names for keys
+
+func coreNameAdd(dir, name, addr string) error {
+	dir, err := returnNamesDir(dir)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path.Join(dir, name), []byte(addr), 0600)
+}
+
+func coreNameList(dir string) (map[string]string, error) {
+	dir, err := returnNamesDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[string]string)
+	fs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range fs {
+		b, err := ioutil.ReadFile(path.Join(dir, f.Name()))
+		if err != nil {
+			return nil, err
+		}
+		names[f.Name()] = string(b)
+	}
+	return names, nil
+}
+
+func coreNameRm(dir, name string) error {
+	dir, err := returnNamesDir(dir)
+	if err != nil {
+		return err
+	}
+	return os.Remove(path.Join(dir, name))
+}
+
+func coreNameGet(dir, name string) (string, error) {
+	dir, err := returnNamesDir(dir)
+	if err != nil {
+		return "", err
+	}
+	b, err := ioutil.ReadFile(path.Join(dir, name))
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
