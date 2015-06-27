@@ -2,35 +2,50 @@ package commands
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
 )
 
-// most commands require at least one of --name or --addr
-func checkGetNameAddr(dir, name, addr string) string {
-	if name == "" && addr == "" {
-		Exit(fmt.Errorf("at least one of --name or --addr must be provided"))
-	}
-
-	// name takes precedent if both are given
-	var err error
-	if name != "" {
-		addr, err = coreNameGet(dir, name)
-		IfExit(err)
-	}
-	return addr
+func cliServer(c *cli.Context) {
+	host, port := c.String("host"), c.String("port")
+	IfExit(ListenAndServe(host, port))
 }
 
 func cliKeygen(c *cli.Context) {
 	dir, auth, keyType, name := c.String("dir"), c.String("auth"), c.String("type"), c.String("name")
+	if UseDaemon {
+		r, err := Call("gen", map[string]string{"dir": dir, "auth": auth, "type": keyType, "name": name})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			fmt.Println(r)
+			return
+		}
+	}
 	addr, err := coreKeygen(dir, auth, keyType)
 	IfExit(err)
 	if name != "" {
 		IfExit(coreNameAdd(dir, name, hex.EncodeToString(addr)))
 	}
 	fmt.Printf("%X\n", addr)
+}
+
+func cliPub(c *cli.Context) {
+	auth, dir, addr, name := c.String("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	if UseDaemon {
+		r, err := Call("pub", map[string]string{"dir": dir, "auth": auth, "addr": addr, "name": name})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			fmt.Println(r)
+			return
+		}
+	}
+	addr = checkGetNameAddr(dir, name, addr)
+	pub, err := corePub(dir, auth, addr)
+	IfExit(err)
+	fmt.Printf("%X\n", pub)
 }
 
 func cliSign(c *cli.Context) {
@@ -40,6 +55,15 @@ func cliSign(c *cli.Context) {
 		Exit(fmt.Errorf("enter a msg/hash to sign"))
 	}
 	msg := args[0]
+	if UseDaemon {
+		r, err := Call("sign", map[string]string{"dir": dir, "auth": auth, "addr": addr, "name": name, "msg": msg})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			fmt.Println(r)
+			return
+		}
+	}
+
 	addr = checkGetNameAddr(dir, name, addr)
 	sig, err := coreSign(dir, auth, msg, addr)
 	IfExit(err)
@@ -53,18 +77,18 @@ func cliVerify(c *cli.Context) {
 		Exit(fmt.Errorf("enter a msg/hash and a signature"))
 	}
 	msg, sig := args[0], args[1]
+	if UseDaemon {
+		r, err := Call("verify", map[string]string{"dir": dir, "auth": auth, "addr": addr, "name": name, "msg": msg, "sig": sig})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			fmt.Println(r)
+			return
+		}
+	}
 	addr = checkGetNameAddr(dir, name, addr)
 	res, err := coreVerify(dir, auth, addr, msg, sig)
 	IfExit(err)
 	fmt.Println(res)
-}
-
-func cliPub(c *cli.Context) {
-	auth, dir, addr, name := c.String("auth"), c.String("dir"), c.String("addr"), c.String("name")
-	addr = checkGetNameAddr(dir, name, addr)
-	pub, err := corePub(dir, auth, addr)
-	IfExit(err)
-	fmt.Printf("%X\n", pub)
 }
 
 func cliHash(c *cli.Context) {
@@ -74,14 +98,17 @@ func cliHash(c *cli.Context) {
 	}
 	typ := c.String("type")
 	toHash := args[0]
+	if UseDaemon {
+		r, err := Call("hash", map[string]string{"type": typ, "msg": toHash})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			fmt.Println(r)
+			return
+		}
+	}
 	hash, err := coreHash(typ, toHash)
 	IfExit(err)
 	fmt.Printf("%X\n", hash)
-}
-
-func cliServer(c *cli.Context) {
-	host, port := c.String("host"), c.String("port")
-	IfExit(ListenAndServe(host, port))
 }
 
 func cliImport(c *cli.Context) {
@@ -92,6 +119,14 @@ func cliImport(c *cli.Context) {
 	auth, dir, name := c.String("auth"), c.String("dir"), c.String("name")
 	keyType := c.String("type")
 	key := args[0]
+	if UseDaemon {
+		r, err := Call("import", map[string]string{"dir": dir, "auth": auth, "name": name, "type": keyType, "key": key})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			fmt.Println(r)
+			return
+		}
+	}
 
 	addr, err := coreImport(dir, auth, keyType, key)
 	IfExit(err)
@@ -111,7 +146,31 @@ func cliName(c *cli.Context) {
 		- ls: eris-keys name --ls
 	*/
 	dir, rm, ls := c.String("dir"), c.Bool("rm"), c.Bool("ls")
+	var name, addr string
+	if len(c.Args()) > 0 {
+		name = c.Args()[0]
+	}
+	if len(c.Args()) > 1 {
+		addr = c.Args()[1]
+	}
 
+	if UseDaemon {
+		r, err := Call("name", map[string]string{"dir": dir, "name": name, "addr": addr, "rm": fmt.Sprintf("%v", rm), "ls": fmt.Sprintf("%v", ls)})
+		if _, ok := err.(ErrConnectionRefused); !ok {
+			IfExit(err)
+			if ls {
+				var names []string
+				IfExit(json.Unmarshal([]byte(r), &names))
+				for n, a := range names {
+					fmt.Printf("%s: %s\n", n, a)
+				}
+
+			} else {
+				fmt.Println(r)
+			}
+			return
+		}
+	}
 	if ls {
 		names, err := coreNameList(dir)
 		IfExit(err)
@@ -121,17 +180,16 @@ func cliName(c *cli.Context) {
 		return
 	}
 
-	if len(c.Args()) == 0 {
+	if name == "" {
 		Exit(fmt.Errorf("please specify a name"))
 	}
-	name := c.Args()[0]
 
 	if rm {
 		IfExit(coreNameRm(dir, name))
 		return
 	}
 
-	if len(c.Args()) > 1 {
+	if addr != "" {
 		addr := c.Args()[1]
 		IfExit(coreNameAdd(dir, name, addr))
 	} else {

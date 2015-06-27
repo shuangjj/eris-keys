@@ -18,6 +18,9 @@ var (
 	DefaultAddr = "http://" + DefaultHost + ":" + DefaultPort
 	TestPort    = "7674"
 	TestAddr    = "http://" + DefaultHost + ":" + TestPort
+
+	DaemonAddr = DefaultAddr
+	UseDaemon  = true
 )
 
 func DefineApp() *cli.App {

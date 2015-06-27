@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,6 +20,8 @@ func ListenAndServe(host, port string) error {
 	mux.HandleFunc("/sign", signHandler)
 	mux.HandleFunc("/verify", verifyHandler)
 	mux.HandleFunc("/hash", hashHandler)
+	mux.HandleFunc("/import", importHandler)
+	mux.HandleFunc("/name", nameHandler)
 	if os.Getenv("ERIS_KEYS_HOST") != "" {
 		host = os.Getenv("ERIS_KEYS_HOST")
 	}
@@ -51,34 +54,28 @@ func WriteError(w http.ResponseWriter, err error) {
 
 func genHandler(w http.ResponseWriter, r *http.Request) {
 	typ, dir, auth := typeDirAuth(r)
+	name := r.Header.Get("name")
 	addr, err := coreKeygen(dir, auth, typ)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
+	if name != "" {
+		err := coreNameAdd(dir, name, hex.EncodeToString(addr))
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
 	WriteResult(w, fmt.Sprintf("%X", addr))
-}
-
-func pubHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth := typeDirAuth(r)
-	addr := r.Header.Get("addr")
-	if addr == "" {
-		WriteError(w, fmt.Errorf("must provide an address with the `addr` key"))
-		return
-	}
-	pub, err := corePub(dir, auth, addr)
-	if err != nil {
-		WriteError(w, err)
-		return
-	}
-	WriteResult(w, fmt.Sprintf("%X", pub))
 }
 
 func signHandler(w http.ResponseWriter, r *http.Request) {
 	_, dir, auth := typeDirAuth(r)
-	addr := r.Header.Get("addr")
-	if addr == "" {
-		WriteError(w, fmt.Errorf("must provide an address with the `addr` key"))
+	addr, name := r.Header.Get("addr"), r.Header.Get("name")
+	addr, err := getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
 		return
 	}
 	hash := r.Header.Get("hash")
@@ -94,11 +91,28 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 	WriteResult(w, fmt.Sprintf("%X", sig))
 }
 
+func pubHandler(w http.ResponseWriter, r *http.Request) {
+	_, dir, auth := typeDirAuth(r)
+	addr, name := r.Header.Get("addr"), r.Header.Get("name")
+	addr, err := getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	pub, err := corePub(dir, auth, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteResult(w, fmt.Sprintf("%X", pub))
+}
+
 func verifyHandler(w http.ResponseWriter, r *http.Request) {
 	_, dir, auth := typeDirAuth(r)
-	addr := r.Header.Get("addr")
-	if addr == "" {
-		WriteError(w, fmt.Errorf("must provide an address with the `addr` key"))
+	addr, name := r.Header.Get("addr"), r.Header.Get("name")
+	addr, err := getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
 		return
 	}
 	hash := r.Header.Get("hash")
@@ -132,6 +146,60 @@ func hashHandler(w http.ResponseWriter, r *http.Request) {
 	WriteResult(w, fmt.Sprintf("%X", hash))
 }
 
+// TODO
+func importHandler(w http.ResponseWriter, r *http.Request) {
+}
+
+func nameHandler(w http.ResponseWriter, r *http.Request) {
+	action := r.URL.Path[len("name"):]
+
+	dir := r.Header.Get("dir")
+	name := r.Header.Get("name")
+	addr := r.Header.Get("addr")
+
+	if action == "ls" {
+		names, err := coreNameList(dir)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+
+		b, err := json.Marshal(names)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteResult(w, string(b))
+		return
+	}
+
+	if name == "" {
+		WriteError(w, fmt.Errorf("please specify a name"))
+		return
+	}
+
+	if action == "rm" {
+		if err := coreNameRm(dir, name); err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
+
+	if addr == "" {
+		addr, err := coreNameGet(dir, name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteResult(w, addr)
+	} else {
+		if err := coreNameAdd(dir, name, addr); err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
+}
+
 // convenience function
 func typeDirAuth(r *http.Request) (string, string, string) {
 	typ := r.Header.Get("type")
@@ -142,7 +210,7 @@ func typeDirAuth(r *http.Request) (string, string, string) {
 	if dir == "" {
 		dir = DefaultDir
 	}
-	auth := r.Header.Get("dir")
+	auth := r.Header.Get("auth")
 	if auth == "" {
 		auth = DefaultAuth
 	}

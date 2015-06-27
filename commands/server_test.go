@@ -2,9 +2,7 @@ package commands
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -119,28 +117,4 @@ func checkErrs(t *testing.T, errS string, err error) {
 	if errS != "" {
 		t.Fatal(errS)
 	}
-}
-
-func unpackResponse(resp *http.Response) (string, string, error) {
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", "", err
-	}
-	r := new(HTTPResponse)
-	if err := json.Unmarshal(b, r); err != nil {
-		return "", "", err
-	}
-	return r.Response, r.Error, nil
-}
-
-func requestResponse(req *http.Request) (string, string, error) {
-	client := new(http.Client)
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", "", err
-	}
-	if resp.StatusCode >= 400 {
-		return "", "", fmt.Errorf(resp.Status)
-	}
-	return unpackResponse(resp)
 }
