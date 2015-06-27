@@ -136,9 +136,10 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 
 func hashHandler(w http.ResponseWriter, r *http.Request) {
 	typ, _, _ := typeDirAuth(r)
-	data := r.Header.Get("data")
+	msg := r.Header.Get("msg")
+	hexD := r.Header.Get("hex")
 
-	hash, err := coreHash(typ, data)
+	hash, err := coreHash(typ, msg, hexD == "true")
 	if err != nil {
 		WriteError(w, err)
 		return

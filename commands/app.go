@@ -109,6 +109,7 @@ var (
 		Action: cliHash,
 		Flags: []cli.Flag{
 			hashTypeFlag,
+			hexFlag,
 		},
 	}
 
@@ -190,6 +191,11 @@ var (
 	lsFlag = cli.BoolFlag{
 		Name:  "ls",
 		Usage: "list all <name>:<address> pairs",
+	}
+
+	hexFlag = cli.BoolFlag{
+		Name:  "hex",
+		Usage: "the input should be hex decoded to bytes first",
 	}
 )
 

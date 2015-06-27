@@ -96,17 +96,17 @@ func cliHash(c *cli.Context) {
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter something to hash"))
 	}
-	typ := c.String("type")
-	toHash := args[0]
+	typ, hexD := c.String("type"), c.Bool("hex")
+	msg := args[0]
 	if UseDaemon {
-		r, err := Call("hash", map[string]string{"type": typ, "msg": toHash})
+		r, err := Call("hash", map[string]string{"type": typ, "msg": msg, "hex": fmt.Sprintf("%v", hexD)})
 		if _, ok := err.(ErrConnectionRefused); !ok {
 			IfExit(err)
 			fmt.Println(r)
 			return
 		}
 	}
-	hash, err := coreHash(typ, toHash)
+	hash, err := coreHash(typ, msg, hexD)
 	IfExit(err)
 	fmt.Printf("%X\n", hash)
 }

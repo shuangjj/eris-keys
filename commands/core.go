@@ -195,7 +195,7 @@ func corePub(dir, auth, addr string) ([]byte, error) {
 	return pub, nil
 }
 
-func coreHash(typ, data string) ([]byte, error) {
+func coreHash(typ, data string, hexD bool) ([]byte, error) {
 	var hasher hash.Hash
 	switch typ {
 	case "ripemd160":
@@ -206,7 +206,15 @@ func coreHash(typ, data string) ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("Unknown hash type %s", typ)
 	}
-	io.WriteString(hasher, data)
+	if hexD {
+		d, err := hex.DecodeString(data)
+		if err != nil {
+			return nil, fmt.Errorf("invalid hex")
+		}
+		hasher.Write(d)
+	} else {
+		io.WriteString(hasher, data)
+	}
 	return hasher.Sum(nil), nil
 }
 
