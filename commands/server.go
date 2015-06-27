@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
 
 //------------------------------------------------------------------------
@@ -61,7 +62,7 @@ func genHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if name != "" {
-		err := coreNameAdd(dir, name, hex.EncodeToString(addr))
+		err := coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr)))
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -159,7 +160,7 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if name != "" {
-		if err := coreNameAdd(dir, name, hex.EncodeToString(addr)); err != nil {
+		if err := coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr))); err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -210,7 +211,7 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		WriteResult(w, addr)
 	} else {
-		if err := coreNameAdd(dir, name, addr); err != nil {
+		if err := coreNameAdd(dir, name, strings.ToUpper(addr)); err != nil {
 			WriteError(w, err)
 			return
 		}

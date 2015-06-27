@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
@@ -27,7 +28,7 @@ func cliKeygen(c *cli.Context) {
 	addr, err := coreKeygen(dir, auth, keyType)
 	IfExit(err)
 	if name != "" {
-		IfExit(coreNameAdd(dir, name, hex.EncodeToString(addr)))
+		IfExit(coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr))))
 	}
 	fmt.Printf("%X\n", addr)
 }
@@ -132,7 +133,7 @@ func cliImport(c *cli.Context) {
 	IfExit(err)
 
 	if name != "" {
-		IfExit(coreNameAdd(dir, name, hex.EncodeToString(addr)))
+		IfExit(coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr))))
 	}
 	fmt.Printf("%X\n", addr)
 }
@@ -191,10 +192,10 @@ func cliName(c *cli.Context) {
 
 	if addr != "" {
 		addr := c.Args()[1]
-		IfExit(coreNameAdd(dir, name, addr))
+		IfExit(coreNameAdd(dir, name, strings.ToUpper(addr)))
 	} else {
 		addr, err := coreNameGet(dir, name)
 		IfExit(err)
-		fmt.Println(addr)
+		fmt.Println(strings.ToUpper(addr))
 	}
 }

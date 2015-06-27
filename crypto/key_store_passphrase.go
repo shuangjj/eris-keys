@@ -82,6 +82,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/scrypt" // 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
@@ -154,7 +155,7 @@ func (ks keyStorePassphrase) StoreKey(key *Key, auth string) (err error) {
 	keyStruct := encryptedKeyJSON{
 		key.Id,
 		key.Type.String(),
-		hex.EncodeToString(key.Address),
+		strings.ToUpper(hex.EncodeToString(key.Address)),
 		cipherStruct,
 	}
 	keyJSON, err := json.Marshal(keyStruct)
@@ -172,7 +173,7 @@ func (ks keyStorePassphrase) DeleteKey(keyAddr []byte, auth string) (err error) 
 		return err
 	}
 
-	keyDirPath := path.Join(ks.keysDirPath, hex.EncodeToString(keyAddr))
+	keyDirPath := path.Join(ks.keysDirPath, strings.ToUpper(hex.EncodeToString(keyAddr)))
 	return os.RemoveAll(keyDirPath)
 }
 

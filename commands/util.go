@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
 )
@@ -30,7 +31,7 @@ func getNameAddr(dir, name, addr string) (string, error) {
 			return "", err
 		}
 	}
-	return addr, nil
+	return strings.ToUpper(addr), nil
 }
 
 //------------------------------------------------------------

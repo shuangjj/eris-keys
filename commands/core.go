@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
 	"github.com/eris-ltd/eris-keys/crypto"
@@ -70,7 +71,7 @@ func coreImport(dir, auth, keyType, keyHex string) ([]byte, error) {
 			if err != nil {
 				return nil, err
 			}
-			if err := ioutil.WriteFile(path.Join(dir, hex.EncodeToString(addr)), keyJson, 0600); err != nil {
+			if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
 				return nil, err
 			}
 			return addr, nil

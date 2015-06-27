@@ -242,7 +242,7 @@ func (k *Key) MarshalJSON() (j []byte, err error) {
 	jStruct := plainKeyJSON{
 		k.Id,
 		k.Type.String(),
-		fmt.Sprintf("%x", k.Address),
+		fmt.Sprintf("%X", k.Address),
 		k.PrivateKey,
 	}
 	j, err = json.Marshal(jStruct)
