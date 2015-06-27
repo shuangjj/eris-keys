@@ -3,9 +3,10 @@ FROM eris/base:latest
 
 MAINTAINER Eris Industries <support@erisindustries.com>
 
+# bsmainutils for hexdump
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
-    libgmp3-dev && \
+    libgmp3-dev openssl jq bsdmainutils && \ 
   rm -rf /var/lib/apt/lists/*
 
 ENV REPOSITORY "github.com/eris-ltd/eris-keys"
@@ -24,5 +25,4 @@ RUN chown -R $USER:$USER $DATA
 # Final Config
 VOLUME $DATA
 EXPOSE 4767
-ENTRYPOINT ["eris-keys"]
-CMD ["server", "--host", "0.0.0.0"]
+CMD [ "eris-keys", "server" ]

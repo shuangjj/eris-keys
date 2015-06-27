@@ -93,7 +93,7 @@ func testServerHash(t *testing.T, typ string) {
 
 	req, _ := http.NewRequest("GET", TestAddr+"/hash", nil)
 	req.Header.Add("type", typ)
-	req.Header.Add("data", data)
+	req.Header.Add("msg", data)
 	hash, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 

@@ -70,7 +70,7 @@ func TestSignAndVerify(t *testing.T) {
 func testHash(t *testing.T, typ string) {
 	hData := hashData[typ]
 	data, expected := hData.data, hData.expected
-	hash, err := coreHash(typ, data)
+	hash, err := coreHash(typ, data, false)
 	if err != nil {
 		t.Fatal(err)
 	}
