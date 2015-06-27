@@ -268,6 +268,25 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	return err
 }
 
+// returns the address if valid, nil otherwise
+func IsValidKeyJson(j []byte) []byte {
+	j1 := new(plainKeyJSON)
+	e1 := json.Unmarshal(j, &j1)
+	if e1 == nil {
+		addr, _ := hex.DecodeString(j1.Address)
+		return addr
+	}
+
+	j2 := new(encryptedKeyJSON)
+	e2 := json.Unmarshal(j, &j2)
+	if e2 == nil {
+		addr, _ := hex.DecodeString(j2.Address)
+		return addr
+	}
+
+	return nil
+}
+
 //-----------------------------------------------------------------------------
 // main utility functions for each key type (new, pub, sign, verify)
 // TODO: run all sorts of length and validity checks

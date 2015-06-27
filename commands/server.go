@@ -70,6 +70,22 @@ func genHandler(w http.ResponseWriter, r *http.Request) {
 	WriteResult(w, fmt.Sprintf("%X", addr))
 }
 
+func pubHandler(w http.ResponseWriter, r *http.Request) {
+	_, dir, auth := typeDirAuth(r)
+	addr, name := r.Header.Get("addr"), r.Header.Get("name")
+	addr, err := getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	pub, err := corePub(dir, auth, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteResult(w, fmt.Sprintf("%X", pub))
+}
+
 func signHandler(w http.ResponseWriter, r *http.Request) {
 	_, dir, auth := typeDirAuth(r)
 	addr, name := r.Header.Get("addr"), r.Header.Get("name")
@@ -89,22 +105,6 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	WriteResult(w, fmt.Sprintf("%X", sig))
-}
-
-func pubHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth := typeDirAuth(r)
-	addr, name := r.Header.Get("addr"), r.Header.Get("name")
-	addr, err := getNameAddr(dir, name, addr)
-	if err != nil {
-		WriteError(w, err)
-		return
-	}
-	pub, err := corePub(dir, auth, addr)
-	if err != nil {
-		WriteError(w, err)
-		return
-	}
-	WriteResult(w, fmt.Sprintf("%X", pub))
 }
 
 func verifyHandler(w http.ResponseWriter, r *http.Request) {
@@ -146,8 +146,24 @@ func hashHandler(w http.ResponseWriter, r *http.Request) {
 	WriteResult(w, fmt.Sprintf("%X", hash))
 }
 
-// TODO
 func importHandler(w http.ResponseWriter, r *http.Request) {
+	typ, dir, auth := typeDirAuth(r)
+	name := r.Header.Get("data")
+	key := r.Header.Get("key")
+
+	addr, err := coreImport(dir, auth, typ, key)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+
+	if name != "" {
+		if err := coreNameAdd(dir, name, hex.EncodeToString(addr)); err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
+	WriteResult(w, fmt.Sprintf("%X", addr))
 }
 
 func nameHandler(w http.ResponseWriter, r *http.Request) {

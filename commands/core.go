@@ -61,9 +61,25 @@ func coreImport(dir, auth, keyType, keyHex string) ([]byte, error) {
 		return nil, err
 	}
 
+	// if the keyHex is actually json, make sure
+	// its a valid key, write to file
+	if len(keyHex) > 0 && keyHex[:1] == "{" {
+		keyJson := []byte(keyHex)
+		if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
+			dir, err = returnDataDir(dir)
+			if err != nil {
+				return nil, err
+			}
+			if err := ioutil.WriteFile(path.Join(dir, hex.EncodeToString(addr)), keyJson, 0600); err != nil {
+				return nil, err
+			}
+			return addr, nil
+		}
+	}
+
 	keyBytes, err := hex.DecodeString(keyHex)
 	if err != nil {
-		return nil, fmt.Errorf("private key is invalid hex: %v", err)
+		return nil, fmt.Errorf("private key is not a valid json key and is invalid hex: %v", err)
 	}
 
 	keyT, err := crypto.KeyTypeFromString(keyType)
