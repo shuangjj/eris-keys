@@ -3,7 +3,10 @@ FROM eris/base:latest
 
 MAINTAINER Eris Industries <support@erisindustries.com>
 
-# bsmainutils for hexdump
+# we install additional utilities for testing  
+# jq for parsing json
+# bsmainutils for hexdump (converting base64 to hex)
+# openssl for checking hashes
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
     libgmp3-dev openssl jq bsdmainutils && \ 
@@ -25,4 +28,3 @@ RUN chown -R $USER:$USER $DATA
 # Final Config
 VOLUME $DATA
 EXPOSE 4767
-CMD [ "eris-keys", "server" ]
