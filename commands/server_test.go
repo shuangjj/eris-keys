@@ -28,7 +28,7 @@ func init() {
 }
 
 // tests are identical to core_test.go but through the http calls instead of the core functions
-
+//TODO change headers to json maps
 func testServerKeygenAndPub(t *testing.T, typ string) {
 	req, _ := http.NewRequest("GET", TestAddr+"/gen", nil)
 	req.Header.Add("type", typ)
