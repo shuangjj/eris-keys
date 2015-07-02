@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rs/cors"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/rs/cors"
 )
 
 //------------------------------------------------------------------------
