@@ -31,7 +31,7 @@
 		},
 		{
 			"ImportPath": "github.com/eris-ltd/common",
-			"Rev": "09646e0cc875bc60cc93acf4d3dec99da59ebe36"
+			"Rev": "0cf7de8e17a85aa97ea053d718708f7056d3e60e"
 		},
 		{
 			"ImportPath": "github.com/inconshreveable/log15/stack",

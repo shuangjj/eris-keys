@@ -5,11 +5,12 @@ import (
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/log"
 )
 
 var (
 	DefaultKeyType  = "ed25519,ripemd160"
-	DefaultDir      = common.Keys
+	DefaultDir      = common.KeysPath
 	DefaultAuth     = ""
 	DefaultHashType = "sha256"
 
@@ -30,6 +31,11 @@ func DefineApp() *cli.App {
 	app.Version = "0.1.1"
 	app.Author = "Ethan Buchman"
 	app.Email = "ethan@erisindustries.com"
+	app.Before = before
+	app.Flags = []cli.Flag{
+		debugFlag,
+	}
+
 	app.Commands = []cli.Command{
 		keygenCmd,
 		signCmd,
@@ -197,7 +203,23 @@ var (
 		Name:  "hex",
 		Usage: "the input should be hex decoded to bytes first",
 	}
+
+	debugFlag = cli.BoolFlag{
+		Name:  "debug",
+		Usage: "print debug messages",
+	}
 )
+
+func before(c *cli.Context) error {
+	var level int
+	if c.GlobalBool("debug") || c.Bool("debug") {
+		level = 2
+	}
+	log.SetLoggers(level, os.Stdout, os.Stderr)
+
+	logger.Debugf("UseDaemon: %v\n", UseDaemon)
+	return nil
+}
 
 func checkMakeDataDir(dir string) error {
 	if _, err := os.Stat(dir); err != nil {

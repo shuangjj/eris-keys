@@ -262,10 +262,13 @@ func typeDirAuth(r *http.Request) (string, string, string) {
 
 // convenience function
 func typeDirAuthArgs(r *http.Request) (typ string, dir string, auth string, args map[string]string, err error) {
+
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return
 	}
+
+	logger.Debugln("Request body:", string(b))
 
 	if err = json.Unmarshal(b, &args); err != nil {
 		return

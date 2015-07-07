@@ -30,7 +30,7 @@ func cliKeygen(c *cli.Context) {
 	if name != "" {
 		IfExit(coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr))))
 	}
-	fmt.Printf("%X\n", addr)
+	logger.Printf("%X\n", addr)
 }
 
 func cliPub(c *cli.Context) {
