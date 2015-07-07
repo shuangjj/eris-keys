@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -67,10 +68,11 @@ func requestResponse(req *http.Request) (string, string, error) {
 // Call the http server
 func Call(method string, args map[string]string) (string, error) {
 	url := fmt.Sprintf("%s/%s", DaemonAddr, method)
-	req, _ := http.NewRequest("GET", url, nil)
-	for k, v := range args {
-		req.Header.Add(k, v)
+	b, err := json.Marshal(args)
+	if err != nil {
+		return "", err
 	}
+	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r, errS, err := requestResponse(req)
 	if err != nil {
 		return "", err
