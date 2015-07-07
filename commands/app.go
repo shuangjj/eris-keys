@@ -32,6 +32,7 @@ func DefineApp() *cli.App {
 	app.Author = "Ethan Buchman"
 	app.Email = "ethan@erisindustries.com"
 	app.Before = before
+	app.After = after
 	app.Flags = []cli.Flag{
 		debugFlag,
 	}
@@ -218,6 +219,11 @@ func before(c *cli.Context) error {
 	log.SetLoggers(level, os.Stdout, os.Stderr)
 
 	logger.Debugf("UseDaemon: %v\n", UseDaemon)
+	return nil
+}
+
+func after(c *cli.Context) error {
+	log.Flush()
 	return nil
 }
 
