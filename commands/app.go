@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
@@ -9,7 +8,7 @@ import (
 )
 
 var (
-	DefaultKeyType  = "ed25519"
+	DefaultKeyType  = "ed25519,ripemd160"
 	DefaultDir      = common.Keys
 	DefaultAuth     = ""
 	DefaultHashType = "sha256"
@@ -19,13 +18,16 @@ var (
 	DefaultAddr = "http://" + DefaultHost + ":" + DefaultPort
 	TestPort    = "7674"
 	TestAddr    = "http://" + DefaultHost + ":" + TestPort
+
+	DaemonAddr = DefaultAddr
+	UseDaemon  = true
 )
 
 func DefineApp() *cli.App {
 	app := cli.NewApp()
 	app.Name = "eris-keys"
 	app.Usage = "Generate and manage keys for producing signatures"
-	app.Version = "0.0.1"
+	app.Version = "0.1.1"
 	app.Author = "Ethan Buchman"
 	app.Email = "ethan@erisindustries.com"
 	app.Commands = []cli.Command{
@@ -36,6 +38,7 @@ func DefineApp() *cli.App {
 		hashCmd,
 		serverCmd,
 		importCmd,
+		nameCmd,
 	}
 	return app
 }
@@ -49,39 +52,54 @@ var (
 			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
+		},
+	}
+
+	nameCmd = cli.Command{
+		Name:   "name",
+		Usage:  "manage key names. `eris-keys name <name> <address>`",
+		Action: cliName,
+		Flags: []cli.Flag{
+			dirFlag,
+			rmFlag,
+			lsFlag,
 		},
 	}
 
 	signCmd = cli.Command{
 		Name:   "sign",
-		Usage:  "eris-keys sign <hash> <address>",
+		Usage:  "eris-keys sign --addr <address> <hash>",
 		Action: cliSign,
 		Flags: []cli.Flag{
-			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
+			addrFlag,
 		},
 	}
 
 	pubKeyCmd = cli.Command{
 		Name:   "pub",
-		Usage:  "eris-keys pub <addr>",
+		Usage:  "eris-keys pub --addr <addr>",
 		Action: cliPub,
 		Flags: []cli.Flag{
-			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
+			addrFlag,
 		},
 	}
 
 	verifyCmd = cli.Command{
 		Name:   "verify",
-		Usage:  "eris-keys verify <addr> <hash> <sig>",
+		Usage:  "eris-keys verify --addr <addr> <hash> <sig>",
 		Action: cliVerify,
 		Flags: []cli.Flag{
-			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
+			addrFlag,
 		},
 	}
 
@@ -91,6 +109,7 @@ var (
 		Action: cliHash,
 		Flags: []cli.Flag{
 			hashTypeFlag,
+			hexFlag,
 		},
 	}
 
@@ -112,12 +131,14 @@ var (
 			keyTypeFlag,
 			dirFlag,
 			authFlag,
+			nameFlag,
 		},
 	}
+
 	keyTypeFlag = cli.StringFlag{
 		Name:  "type",
 		Value: DefaultKeyType,
-		Usage: "specify the type of key to create. Supports 'secp256k1' and 'ed25519'",
+		Usage: "specify the type of key to create. Supports 'secp256k1,sha3' (ethereum),  'secp256k1,ripemd160sha2' (bitcoin), 'ed25519,ripemd160' (tendermint)",
 	}
 
 	hashTypeFlag = cli.StringFlag{
@@ -138,6 +159,18 @@ var (
 		Usage: "a password to be used for encrypting keys",
 	}
 
+	addrFlag = cli.StringFlag{
+		Name:  "addr",
+		Value: "",
+		Usage: "address of key to use",
+	}
+
+	nameFlag = cli.StringFlag{
+		Name:  "name",
+		Value: "",
+		Usage: "name of key to use",
+	}
+
 	hostFlag = cli.StringFlag{
 		Name:  "host",
 		Value: DefaultHost,
@@ -149,17 +182,29 @@ var (
 		Value: DefaultPort,
 		Usage: "set the port for key daemon to listen on",
 	}
-)
 
-func exit(err error) {
-	fmt.Println(err)
-	os.Exit(1)
-}
-
-func ifExit(err error) {
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	rmFlag = cli.BoolFlag{
+		Name:  "rm",
+		Usage: "remove a key's name",
 	}
 
+	lsFlag = cli.BoolFlag{
+		Name:  "ls",
+		Usage: "list all <name>:<address> pairs",
+	}
+
+	hexFlag = cli.BoolFlag{
+		Name:  "hex",
+		Usage: "the input should be hex decoded to bytes first",
+	}
+)
+
+func checkMakeDataDir(dir string) error {
+	if _, err := os.Stat(dir); err != nil {
+		err = os.MkdirAll(dir, 0700)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

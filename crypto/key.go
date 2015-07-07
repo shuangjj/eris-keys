@@ -29,6 +29,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/ed25519"
@@ -37,104 +38,179 @@ import (
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
 )
 
+type InvalidCurveErr string
+
+func (err InvalidCurveErr) Error() string {
+	return fmt.Sprintf("invalid curve type %v", err)
+}
+
+type KeyType struct {
+	CurveType CurveType
+	AddrType  AddrType
+}
+
+func (typ KeyType) String() string {
+	return fmt.Sprintf("%s,%s", typ.CurveType.String(), typ.AddrType.String())
+}
+
+func KeyTypeFromString(s string) (k KeyType, err error) {
+	spl := strings.Split(s, ",")
+	if len(spl) != 2 {
+		return k, fmt.Errorf("KeyType should be (CurveType,AddrType)")
+	}
+
+	cType, aType := spl[0], spl[1]
+	if k.CurveType, err = CurveTypeFromString(cType); err != nil {
+		return
+	}
+	k.AddrType, err = AddrTypeFromString(aType)
+	return
+}
+
 //-----------------------------------------------------------------------------
-// key type
+// curve type
 
-type KeyType uint8
+type CurveType uint8
 
-func (k KeyType) String() string {
+func (k CurveType) String() string {
 	switch k {
-	case KeyTypeSecp256k1:
+	case CurveTypeSecp256k1:
 		return "secp256k1"
-	case KeyTypeEd25519:
+	case CurveTypeEd25519:
 		return "ed25519"
 	default:
 		return "unknown"
 	}
 }
 
-func KeyTypeFromString(s string) (KeyType, error) {
+func CurveTypeFromString(s string) (CurveType, error) {
 	switch s {
 	case "secp256k1":
-		return KeyTypeSecp256k1, nil
+		return CurveTypeSecp256k1, nil
 	case "ed25519":
-		return KeyTypeEd25519, nil
+		return CurveTypeEd25519, nil
 	default:
-		var k KeyType
-		return k, fmt.Errorf("unknown key type %s", s)
+		var k CurveType
+		return k, InvalidCurveErr(s)
 	}
 }
 
 const (
-	KeyTypeSecp256k1 KeyType = iota
-	KeyTypeEd25519
+	CurveTypeSecp256k1 CurveType = iota
+	CurveTypeEd25519
 )
+
+//-----------------------------------------------------------------------------
+// address type
+
+type AddrType uint8
+
+func (a AddrType) String() string {
+	switch a {
+	case AddrTypeRipemd160:
+		return "ripemd160"
+	case AddrTypeRipemd160Sha256:
+		return "ripemd160sha256"
+	case AddrTypeSha3:
+		return "sha3"
+	default:
+		return "unknown"
+	}
+}
+
+func AddrTypeFromString(s string) (AddrType, error) {
+	switch s {
+	case "ripemd160":
+		return AddrTypeRipemd160, nil
+	case "ripemd160sha256":
+		return AddrTypeRipemd160Sha256, nil
+	case "sha3":
+		return AddrTypeSha3, nil
+	default:
+		var a AddrType
+		return a, fmt.Errorf("unknown addr type %s", s)
+	}
+}
+
+const (
+	AddrTypeRipemd160 AddrType = iota
+	AddrTypeRipemd160Sha256
+	AddrTypeSha3
+)
+
+func AddressFromPub(addrType AddrType, pub []byte) (addr []byte) {
+	switch addrType {
+	case AddrTypeRipemd160:
+		// let tendermint/binary handle because
+		// it encodes the type byte ...
+	case AddrTypeRipemd160Sha256:
+		addr = Ripemd160(Sha256(pub))
+	case AddrTypeSha3:
+		addr = Sha3(pub[1:])[12:]
+	}
+	return
+}
 
 //-----------------------------------------------------------------------------
 // main key struct and functions (sign, pubkey, verify)
 
 type Key struct {
-	Id uuid.UUID // Version 4 "random" for unique id not derived from key data
-	// key may be secp256k1 or ed25519 or potentially others
-	Type KeyType
-	// to simplify lookups we also store the address
-	Address []byte
-	// we only store privkey as pubkey/address can be derived from it
-	// privkey in this struct is always in plaintext
-	PrivateKey []byte
+	Id         uuid.UUID // Version 4 "random" for unique id not derived from key data
+	Type       KeyType   // contains curve and addr types
+	Address    []byte    // reference id
+	PrivateKey []byte    // we don't store pub
 }
 
 func NewKey(typ KeyType) (*Key, error) {
-	switch typ {
-	case KeyTypeSecp256k1:
-		return newKeySecp256k1(), nil
-	case KeyTypeEd25519:
-		return newKeyEd25519(), nil
+	switch typ.CurveType {
+	case CurveTypeSecp256k1:
+		return newKeySecp256k1(typ.AddrType), nil
+	case CurveTypeEd25519:
+		return newKeyEd25519(typ.AddrType), nil
 	default:
-		return nil, fmt.Errorf("Unknown key type: %v", typ)
+		return nil, fmt.Errorf("Unknown curve type: %v", typ.CurveType)
 	}
 }
 
 func NewKeyFromPriv(typ KeyType, priv []byte) (*Key, error) {
-	switch typ {
-	case KeyTypeSecp256k1:
-		return keyFromPrivSecp256k1(priv)
-	case KeyTypeEd25519:
-		return keyFromPrivEd25519(priv)
+	switch typ.CurveType {
+	case CurveTypeSecp256k1:
+		return keyFromPrivSecp256k1(typ.AddrType, priv)
+	case CurveTypeEd25519:
+		return keyFromPrivEd25519(typ.AddrType, priv)
 	default:
-		return nil, fmt.Errorf("Unknown key type: %v", typ)
+		return nil, fmt.Errorf("Unknown curve type: %v", typ.CurveType)
 	}
 }
 
 func (k *Key) Sign(hash []byte) ([]byte, error) {
-	switch k.Type {
-	case KeyTypeSecp256k1:
+	switch k.Type.CurveType {
+	case CurveTypeSecp256k1:
 		return signSecp256k1(k, hash)
-	case KeyTypeEd25519:
+	case CurveTypeEd25519:
 		return signEd25519(k, hash)
 	}
-	return nil, fmt.Errorf("invalid key type %v", k.Type)
-
+	return nil, InvalidCurveErr(k.Type.CurveType)
 }
 
 func (k *Key) Pubkey() ([]byte, error) {
-	switch k.Type {
-	case KeyTypeSecp256k1:
+	switch k.Type.CurveType {
+	case CurveTypeSecp256k1:
 		return pubKeySecp256k1(k)
-	case KeyTypeEd25519:
+	case CurveTypeEd25519:
 		return pubKeyEd25519(k)
 	}
-	return nil, fmt.Errorf("invalid key type %v", k.Type)
+	return nil, InvalidCurveErr(k.Type.CurveType)
 }
 
 func (k *Key) Verify(hash, sig []byte) (bool, error) {
-	switch k.Type {
-	case KeyTypeSecp256k1:
+	switch k.Type.CurveType {
+	case CurveTypeSecp256k1:
 		return verifySigSecp256k1(k, hash, sig)
-	case KeyTypeEd25519:
+	case CurveTypeEd25519:
 		return verifySigEd25519(k, hash, sig)
 	}
-	return false, fmt.Errorf("invalid key type %v", k.Type)
+	return false, InvalidCurveErr(k.Type.CurveType)
 }
 
 //-----------------------------------------------------------------------------
@@ -166,7 +242,7 @@ func (k *Key) MarshalJSON() (j []byte, err error) {
 	jStruct := plainKeyJSON{
 		k.Id,
 		k.Type.String(),
-		fmt.Sprintf("%x", k.Address),
+		fmt.Sprintf("%X", k.Address),
 		k.PrivateKey,
 	}
 	j, err = json.Marshal(jStruct)
@@ -189,51 +265,69 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	}
 	k.PrivateKey = keyJSON.PrivateKey
 	k.Type, err = KeyTypeFromString(keyJSON.Type)
-
 	return err
+}
+
+// returns the address if valid, nil otherwise
+func IsValidKeyJson(j []byte) []byte {
+	j1 := new(plainKeyJSON)
+	e1 := json.Unmarshal(j, &j1)
+	if e1 == nil {
+		addr, _ := hex.DecodeString(j1.Address)
+		return addr
+	}
+
+	j2 := new(encryptedKeyJSON)
+	e2 := json.Unmarshal(j, &j2)
+	if e2 == nil {
+		addr, _ := hex.DecodeString(j2.Address)
+		return addr
+	}
+
+	return nil
 }
 
 //-----------------------------------------------------------------------------
 // main utility functions for each key type (new, pub, sign, verify)
 // TODO: run all sorts of length and validity checks
 
-func newKeySecp256k1() *Key {
+func newKeySecp256k1(addrType AddrType) *Key {
 	pub, priv := secp256k1.GenerateKeyPair()
 	return &Key{
 		Id:         uuid.NewRandom(),
-		Type:       KeyTypeSecp256k1,
-		Address:    Sha3(pub[1:])[12:],
+		Type:       KeyType{CurveTypeSecp256k1, addrType},
+		Address:    AddressFromPub(addrType, pub),
 		PrivateKey: priv,
 	}
 }
 
-func newKeyEd25519() *Key {
+func newKeyEd25519(addrType AddrType) *Key {
 	randBytes := randentropy.GetEntropyMixed(32)
-	key, _ := keyFromPrivEd25519(randBytes)
+	key, _ := keyFromPrivEd25519(addrType, randBytes)
 	return key
 }
 
-func keyFromPrivSecp256k1(priv []byte) (*Key, error) {
+func keyFromPrivSecp256k1(addrType AddrType, priv []byte) (*Key, error) {
 	pub, err := secp256k1.GeneratePubKey(priv)
 	if err != nil {
 		return nil, err
 	}
 	return &Key{
 		Id:         uuid.NewRandom(),
-		Type:       KeyTypeSecp256k1,
-		Address:    Sha3(pub[1:])[12:],
+		Type:       KeyType{CurveTypeSecp256k1, addrType},
+		Address:    AddressFromPub(addrType, pub),
 		PrivateKey: priv,
 	}, nil
 }
 
-func keyFromPrivEd25519(priv []byte) (*Key, error) {
+func keyFromPrivEd25519(addrType AddrType, priv []byte) (*Key, error) {
 	privKeyBytes := new([64]byte)
 	copy(privKeyBytes[:32], priv)
 	pubKeyBytes := ed25519.MakePublicKey(privKeyBytes)
 	pubKey := account.PubKeyEd25519(pubKeyBytes[:])
 	return &Key{
 		Id:         uuid.NewRandom(),
-		Type:       KeyTypeEd25519,
+		Type:       KeyType{CurveTypeEd25519, addrType},
 		Address:    pubKey.Address(),
 		PrivateKey: privKeyBytes[:],
 	}, nil

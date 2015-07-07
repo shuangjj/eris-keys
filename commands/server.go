@@ -1,10 +1,15 @@
 package commands
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/rs/cors"
 )
 
 //------------------------------------------------------------------------
@@ -19,14 +24,22 @@ func ListenAndServe(host, port string) error {
 	mux.HandleFunc("/sign", signHandler)
 	mux.HandleFunc("/verify", verifyHandler)
 	mux.HandleFunc("/hash", hashHandler)
+	mux.HandleFunc("/import", importHandler)
+	mux.HandleFunc("/name", nameHandler)
 	if os.Getenv("ERIS_KEYS_HOST") != "" {
 		host = os.Getenv("ERIS_KEYS_HOST")
 	}
 	if os.Getenv("ERIS_KEYS_PORT") != "" {
 		port = os.Getenv("ERIS_KEYS_PORT")
 	}
-	return http.ListenAndServe(host+":"+port, mux)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"}, // TODO: dev
+	})
+	return http.ListenAndServe(host+":"+port, c.Handler(mux))
 }
+
+type HTTPRequest map[string]string
 
 // dead simple response struct
 type HTTPResponse struct {
@@ -50,20 +63,38 @@ func WriteError(w http.ResponseWriter, err error) {
 // handlers
 
 func genHandler(w http.ResponseWriter, r *http.Request) {
-	typ, dir, auth := typeDirAuth(r)
+	typ, dir, auth, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+
+	name := args["name"]
 	addr, err := coreKeygen(dir, auth, typ)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
+	if name != "" {
+		err := coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr)))
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
 	WriteResult(w, fmt.Sprintf("%X", addr))
 }
 
 func pubHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth := typeDirAuth(r)
-	addr := r.Header.Get("addr")
-	if addr == "" {
-		WriteError(w, fmt.Errorf("must provide an address with the `addr` key"))
+	_, dir, auth, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	addr, name := args["addr"], args["name"]
+	addr, err = getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
 		return
 	}
 	pub, err := corePub(dir, auth, addr)
@@ -75,13 +106,18 @@ func pubHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func signHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth := typeDirAuth(r)
-	addr := r.Header.Get("addr")
-	if addr == "" {
-		WriteError(w, fmt.Errorf("must provide an address with the `addr` key"))
+	_, dir, auth, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
 		return
 	}
-	hash := r.Header.Get("hash")
+	addr, name := args["addr"], args["name"]
+	addr, err = getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	hash := args["hash"]
 	if hash == "" {
 		WriteError(w, fmt.Errorf("must provide a message hash with the `hash` key"))
 		return
@@ -95,18 +131,23 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth := typeDirAuth(r)
-	addr := r.Header.Get("addr")
-	if addr == "" {
-		WriteError(w, fmt.Errorf("must provide an address with the `addr` key"))
+	_, dir, auth, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
 		return
 	}
-	hash := r.Header.Get("hash")
+	addr, name := args["addr"], args["name"]
+	addr, err = getNameAddr(dir, name, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	hash := args["hash"]
 	if hash == "" {
 		WriteError(w, fmt.Errorf("must provide a message hash with the `hash` key"))
 		return
 	}
-	sig := r.Header.Get("sig")
+	sig := args["sig"]
 	if sig == "" {
 		WriteError(w, fmt.Errorf("must provide a signature with the `sig` key"))
 		return
@@ -121,10 +162,15 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func hashHandler(w http.ResponseWriter, r *http.Request) {
-	typ, _, _ := typeDirAuth(r)
-	data := r.Header.Get("data")
+	typ, _, _, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	msg := args["msg"]
+	hexD := args["hex"]
 
-	hash, err := coreHash(typ, data)
+	hash, err := coreHash(typ, msg, hexD == "true")
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -132,19 +178,113 @@ func hashHandler(w http.ResponseWriter, r *http.Request) {
 	WriteResult(w, fmt.Sprintf("%X", hash))
 }
 
-// convenience function
+func importHandler(w http.ResponseWriter, r *http.Request) {
+	typ, dir, auth, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	name := args["data"]
+	key := args["key"]
+
+	addr, err := coreImport(dir, auth, typ, key)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+
+	if name != "" {
+		if err := coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr))); err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
+	WriteResult(w, fmt.Sprintf("%X", addr))
+}
+
+func nameHandler(w http.ResponseWriter, r *http.Request) {
+	action := r.URL.Path[len("name"):]
+	_, _, _, args, err := typeDirAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	dir := args["dir"]
+	name := args["name"]
+	addr := args["addr"]
+
+	if action == "ls" {
+		names, err := coreNameList(dir)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+
+		b, err := json.Marshal(names)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteResult(w, string(b))
+		return
+	}
+
+	if name == "" {
+		WriteError(w, fmt.Errorf("please specify a name"))
+		return
+	}
+
+	if action == "rm" {
+		if err := coreNameRm(dir, name); err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
+
+	if addr == "" {
+		addr, err := coreNameGet(dir, name)
+		if err != nil {
+			WriteError(w, err)
+			return
+		}
+		WriteResult(w, addr)
+	} else {
+		if err := coreNameAdd(dir, name, strings.ToUpper(addr)); err != nil {
+			WriteError(w, err)
+			return
+		}
+	}
+}
+
 func typeDirAuth(r *http.Request) (string, string, string) {
-	typ := r.Header.Get("type")
+	return DefaultKeyType, DefaultDir, DefaultAuth
+}
+
+// convenience function
+func typeDirAuthArgs(r *http.Request) (typ string, dir string, auth string, args map[string]string, err error) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return
+	}
+
+	if err = json.Unmarshal(b, &args); err != nil {
+		return
+	}
+
+	typ = args["type"]
 	if typ == "" {
 		typ = DefaultKeyType
 	}
-	dir := r.Header.Get("dir")
+
+	dir = args["dir"]
 	if dir == "" {
 		dir = DefaultDir
 	}
-	auth := r.Header.Get("dir")
+
+	auth = args["auth"]
 	if auth == "" {
 		auth = DefaultAuth
 	}
-	return typ, dir, auth
+
+	return
 }

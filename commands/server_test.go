@@ -1,10 +1,10 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
@@ -30,15 +30,22 @@ func init() {
 }
 
 // tests are identical to core_test.go but through the http calls instead of the core functions
+func formatForBody(args map[string]string) *bytes.Buffer {
+	bd1, _ := json.Marshal(args)
+	bd2 := bytes.NewBuffer([]byte(bd1))
+	return bd2
+}
 
 func testServerKeygenAndPub(t *testing.T, typ string) {
-	req, _ := http.NewRequest("GET", TestAddr+"/gen", nil)
-	req.Header.Add("type", typ)
+	body1 := formatForBody(map[string]string{"type": typ})
+	req, _ := http.NewRequest("POST", TestAddr+"/gen", body1)
+
 	addr, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
-	req, _ = http.NewRequest("GET", TestAddr+"/pub", nil)
-	req.Header.Add("addr", addr)
+	body2 := formatForBody(map[string]string{"addr": addr})
+	req, _ = http.NewRequest("POST", TestAddr+"/pub", body2)
+
 	pub, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
@@ -56,23 +63,21 @@ func TestServerKeygenAndPub(t *testing.T) {
 }
 
 func testServerSignAndVerify(t *testing.T, typ string) {
-	req, _ := http.NewRequest("GET", TestAddr+"/gen", nil)
-	req.Header.Add("type", typ)
+	body1 := formatForBody(map[string]string{"type": typ})
+	req, _ := http.NewRequest("POST", TestAddr+"/gen", body1)
 	addr, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
 	hash := crypto.Sha3([]byte("the hash of something!"))
 
-	req, _ = http.NewRequest("GET", TestAddr+"/sign", nil)
-	req.Header.Add("hash", toHex(hash))
-	req.Header.Add("addr", addr)
+	body2 := formatForBody(map[string]string{"hash": toHex(hash), "addr": addr})
+	req, _ = http.NewRequest("POST", TestAddr+"/gen", body2)
+	req, _ = http.NewRequest("POST", TestAddr+"/sign", body2)
 	sig, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
-	req, _ = http.NewRequest("GET", TestAddr+"/verify", nil)
-	req.Header.Add("hash", toHex(hash))
-	req.Header.Add("addr", addr)
-	req.Header.Add("sig", sig)
+	body3 := formatForBody(map[string]string{"hash": toHex(hash), "addr": addr, "sig": sig})
+	req, _ = http.NewRequest("POST", TestAddr+"/verify", body3)
 	res, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
@@ -93,9 +98,8 @@ func testServerHash(t *testing.T, typ string) {
 	hData := hashData[typ]
 	data, expected := hData.data, hData.expected
 
-	req, _ := http.NewRequest("GET", TestAddr+"/hash", nil)
-	req.Header.Add("type", typ)
-	req.Header.Add("data", data)
+	body1 := formatForBody(map[string]string{"type": typ, "msg": data})
+	req, _ := http.NewRequest("POST", TestAddr+"/hash", body1)
 	hash, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
@@ -119,28 +123,4 @@ func checkErrs(t *testing.T, errS string, err error) {
 	if errS != "" {
 		t.Fatal(errS)
 	}
-}
-
-func unpackResponse(resp *http.Response) (string, string, error) {
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", "", err
-	}
-	r := new(HTTPResponse)
-	if err := json.Unmarshal(b, r); err != nil {
-		return "", "", err
-	}
-	return r.Response, r.Error, nil
-}
-
-func requestResponse(req *http.Request) (string, string, error) {
-	client := new(http.Client)
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", "", err
-	}
-	if resp.StatusCode >= 400 {
-		return "", "", fmt.Errorf(resp.Status)
-	}
-	return unpackResponse(resp)
 }

@@ -32,10 +32,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 )
 
 type KeyStore interface {
-	GenerateNewKey(typ KeyType, auth string) (*Key, error)
+	GenerateNewKey(tpy KeyType, auth string) (*Key, error)
 	GetKey(addr []byte, auth string) (*Key, error)
 	GetAllAddresses() ([][]byte, error)
 	StoreKey(key *Key, auth string) error
@@ -93,18 +94,18 @@ func (ks keyStorePlain) StoreKey(key *Key, auth string) (err error) {
 }
 
 func (ks keyStorePlain) DeleteKey(keyAddr []byte, auth string) (err error) {
-	keyDirPath := path.Join(ks.keysDirPath, hex.EncodeToString(keyAddr))
+	keyDirPath := path.Join(ks.keysDirPath, strings.ToUpper(hex.EncodeToString(keyAddr)))
 	err = os.RemoveAll(keyDirPath)
 	return err
 }
 
 func GetKeyFile(keysDirPath string, keyAddr []byte) (fileContent []byte, err error) {
-	fileName := hex.EncodeToString(keyAddr)
+	fileName := strings.ToUpper(hex.EncodeToString(keyAddr))
 	return ioutil.ReadFile(path.Join(keysDirPath, fileName, fileName))
 }
 
 func WriteKeyFile(addr []byte, keysDirPath string, content []byte) (err error) {
-	addrHex := hex.EncodeToString(addr)
+	addrHex := strings.ToUpper(hex.EncodeToString(addr))
 	keyDirPath := path.Join(keysDirPath, addrHex)
 	keyFilePath := path.Join(keyDirPath, addrHex)
 	err = os.MkdirAll(keyDirPath, 0700) // read, write and dir search for user

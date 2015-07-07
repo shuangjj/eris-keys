@@ -14,7 +14,7 @@ import (
 var (
 	DIR        = common.Scratch
 	AUTH       = ""
-	KEY_TYPES  = []string{"secp256k1", "ed25519"}
+	KEY_TYPES  = []string{"secp256k1,sha3", "ed25519,ripemd160", "secp256k1,ripemd160sha256"}
 	HASH_TYPES = []string{"sha256", "ripemd160"}
 )
 
@@ -70,7 +70,7 @@ func TestSignAndVerify(t *testing.T) {
 func testHash(t *testing.T, typ string) {
 	hData := hashData[typ]
 	data, expected := hData.data, hData.expected
-	hash, err := coreHash(typ, data)
+	hash, err := coreHash(typ, data, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,12 +106,16 @@ func toHex(b []byte) string {
 func checkAddrFromPub(typ string, pub, addr []byte) error {
 	var addr2 []byte
 	switch typ {
-	case "secp256k1":
+	case "secp256k1,sha3":
 		addr2 = crypto.Sha3(pub[1:])[12:]
-	case "ed25519":
+	case "secp256k1,ripemd160sha256":
+		addr2 = crypto.Ripemd160(crypto.Sha256(pub))
+	case "ed25519,ripemd160":
 		// XXX: something weird here. I have seen this oscillate!
 		// addr2 = binary.BinaryRipemd160(pub)
 		addr2 = account.PubKeyEd25519(pub).Address()
+	default:
+		return fmt.Errorf("Unknown or incomplete typ %s", typ)
 	}
 	if bytes.Compare(addr, addr2) != 0 {
 		return fmt.Errorf("Keygen addr doesn't match pub. Got %X, expected %X", addr2, addr)

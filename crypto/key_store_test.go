@@ -34,8 +34,8 @@ func TestKeyStorePlain(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	f(KeyTypeSecp256k1)
-	f(KeyTypeEd25519)
+	f(KeyType{CurveTypeSecp256k1, AddrTypeSha3})
+	f(KeyType{CurveTypeEd25519, AddrTypeRipemd160})
 }
 
 func TestKeyStorePassphrase(t *testing.T) {
@@ -64,15 +64,15 @@ func TestKeyStorePassphrase(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	f(KeyTypeSecp256k1)
-	f(KeyTypeEd25519)
+	f(KeyType{CurveTypeSecp256k1, AddrTypeSha3})
+	f(KeyType{CurveTypeEd25519, AddrTypeRipemd160})
 }
 
 func TestKeyStorePassphraseDecryptionFail(t *testing.T) {
 	ks := NewKeyStorePassphrase(common.Keys)
 	pass := "foo"
 	f := func(typ KeyType) {
-		k1, err := ks.GenerateNewKey(KeyTypeSecp256k1, pass)
+		k1, err := ks.GenerateNewKey(KeyType{CurveTypeSecp256k1, AddrTypeSha3}, pass)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -92,6 +92,6 @@ func TestKeyStorePassphraseDecryptionFail(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	f(KeyTypeSecp256k1)
-	f(KeyTypeEd25519)
+	f(KeyType{CurveTypeSecp256k1, AddrTypeSha3})
+	f(KeyType{CurveTypeEd25519, AddrTypeRipemd160})
 }
