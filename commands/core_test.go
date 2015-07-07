@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	DIR        = common.Scratch
+	DIR        = common.ScratchPath
 	AUTH       = ""
 	KEY_TYPES  = []string{"secp256k1,sha3", "ed25519,ripemd160", "secp256k1,ripemd160sha256"}
 	HASH_TYPES = []string{"sha256", "ripemd160"}

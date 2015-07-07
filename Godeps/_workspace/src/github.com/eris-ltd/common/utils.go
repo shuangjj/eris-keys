@@ -31,11 +31,14 @@ var (
 	DataContainersPath = path.Join(ErisRoot, "data")
 	DappsPath          = path.Join(ErisRoot, "dapps")
 	FilesPath          = path.Join(ErisRoot, "files")
-	KeysPath           = path.Join(ErisRoot, "keys/data")
-	KeyNamesPath       = path.Join(ErisRoot, "keys/names")
+	KeysPath           = path.Join(ErisRoot, "keys")
 	LanguagesPath      = path.Join(ErisRoot, "languages")
 	ServicesPath       = path.Join(ErisRoot, "services")
 	ScratchPath        = path.Join(ErisRoot, "scratch")
+
+	// Keys
+	KeysDataPath = path.Join(KeysPath, "data")
+	KeyNamesPath = path.Join(KeysPath, "names")
 
 	// Scratch Directories (globally coordinated)
 	EpmScratchPath  = path.Join(ScratchPath, "epm")
@@ -49,7 +52,7 @@ var (
 )
 
 var MajorDirs = []string{
-	ErisRoot, ActionsPath, BlockchainsPath, DataContainersPath, DappsPath, FilesPath, KeysPath, LanguagesPath, ServicesPath, ScratchPath, EpmScratchPath, LllcScratchPath, SolcScratchPath, SerpScratchPath,
+	ErisRoot, ActionsPath, BlockchainsPath, DataContainersPath, DappsPath, FilesPath, KeysPath, LanguagesPath, ServicesPath, KeysDataPath, KeyNamesPath, ScratchPath, EpmScratchPath, LllcScratchPath, SolcScratchPath, SerpScratchPath,
 }
 
 //---------------------------------------------
