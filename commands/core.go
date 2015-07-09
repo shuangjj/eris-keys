@@ -269,6 +269,22 @@ func coreNameList(dir string) (map[string]string, error) {
 	return names, nil
 }
 
+func coreAddrList(dir string) (map[int]string, error) {
+	dir, err := returnDataDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	addrs := make(map[int]string)
+	fs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(fs); i++ {
+		addrs[i] = fs[i].Name()
+	}
+	return addrs, nil
+}
+
 func coreNameRm(dir, name string) error {
 	dir, err := returnNamesDir(dir)
 	if err != nil {

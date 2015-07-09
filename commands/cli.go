@@ -178,6 +178,12 @@ func cliName(c *cli.Context) {
 		for n, a := range names {
 			fmt.Printf("%s: %s\n", n, a)
 		}
+
+		addrs, err := coreAddrList(dir)
+		IfExit(err)
+		for c, a := range addrs {
+			fmt.Printf("%d: %s\n", c, a)
+		}
 		return
 	}
 

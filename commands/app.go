@@ -197,7 +197,7 @@ var (
 
 	lsFlag = cli.BoolFlag{
 		Name:  "ls",
-		Usage: "list all <name>:<address> pairs",
+		Usage: "list all <name>:<address> pairs + un-named addresses",
 	}
 
 	hexFlag = cli.BoolFlag{
