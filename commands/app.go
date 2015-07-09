@@ -160,9 +160,8 @@ var (
 		Usage: "specify the location of the directory containing key files",
 	}
 
-	authFlag = cli.StringFlag{
+	authFlag = cli.BoolFlag{
 		Name:  "auth",
-		Value: "",
 		Usage: "a password to be used for encrypting keys",
 	}
 

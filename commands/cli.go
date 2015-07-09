@@ -8,6 +8,7 @@ import (
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/howeyc/gopass"
 )
 
 func cliServer(c *cli.Context) {
@@ -15,8 +16,19 @@ func cliServer(c *cli.Context) {
 	IfExit(ListenAndServe(host, port))
 }
 
+func hiddenAuth(authB bool) string {
+	var auth string
+	if authB {
+		fmt.Printf("Enter Password:")
+		pwd := gopass.GetPasswdMasked()
+		auth = string(pwd)
+	}
+	return auth
+}
+
 func cliKeygen(c *cli.Context) {
-	dir, auth, keyType, name := c.String("dir"), c.String("auth"), c.String("type"), c.String("name")
+	dir, authB, keyType, name := c.String("dir"), c.Bool("auth"), c.String("type"), c.String("name")
+	auth := hiddenAuth(authB)
 	if UseDaemon {
 		r, err := Call("gen", map[string]string{"dir": dir, "auth": auth, "type": keyType, "name": name})
 		if _, ok := err.(ErrConnectionRefused); !ok {
@@ -34,7 +46,8 @@ func cliKeygen(c *cli.Context) {
 }
 
 func cliPub(c *cli.Context) {
-	auth, dir, addr, name := c.String("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	authB, dir, addr, name := c.Bool("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	auth := hiddenAuth(authB)
 	if UseDaemon {
 		r, err := Call("pub", map[string]string{"dir": dir, "auth": auth, "addr": addr, "name": name})
 		if _, ok := err.(ErrConnectionRefused); !ok {
@@ -51,7 +64,8 @@ func cliPub(c *cli.Context) {
 
 func cliSign(c *cli.Context) {
 	args := c.Args()
-	auth, dir, addr, name := c.String("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	authB, dir, addr, name := c.Bool("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	auth := hiddenAuth(authB)
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter a msg/hash to sign"))
 	}
@@ -73,7 +87,8 @@ func cliSign(c *cli.Context) {
 
 func cliVerify(c *cli.Context) {
 	args := c.Args()
-	auth, dir, addr, name := c.String("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	authB, dir, addr, name := c.Bool("auth"), c.String("dir"), c.String("addr"), c.String("name")
+	auth := hiddenAuth(authB)
 	if len(args) != 2 {
 		Exit(fmt.Errorf("enter a msg/hash and a signature"))
 	}
@@ -117,7 +132,8 @@ func cliImport(c *cli.Context) {
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter a private key or filename"))
 	}
-	auth, dir, name := c.String("auth"), c.String("dir"), c.String("name")
+	authB, dir, name := c.Bool("auth"), c.String("dir"), c.String("name")
+	auth := hiddenAuth(authB)
 	keyType := c.String("type")
 	key := args[0]
 	if UseDaemon {

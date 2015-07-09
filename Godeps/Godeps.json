@@ -38,6 +38,10 @@
 			"Rev": "4efd89be9b8794df5518a5187af2a5e6fc9ebed9"
 		},
 		{
+			"ImportPath": "github.com/howeyc/gopass",
+			"Rev": "2c70fa70727c953c51695f800f25d6b44abb368e"
+		},
+		{
 			"ImportPath": "github.com/inconshreveable/log15/stack",
 			"Comment": "v2.3-38-g352fceb",
 			"Rev": "352fceb48e895bd1dd0b9f5d3ae8f8516c49af0f"
@@ -106,7 +110,7 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/pbkdf2",
-			"Rev": "4ed45ec682102c643324fae5dff8dab085b6c300"
+			"Rev": "ce6bda69189e9f4ff278a5e181691cd695f753ae"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ripemd160",
@@ -114,7 +118,11 @@
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/scrypt",
-			"Rev": "4ed45ec682102c643324fae5dff8dab085b6c300"
+			"Rev": "ce6bda69189e9f4ff278a5e181691cd695f753ae"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh/terminal",
+			"Rev": "ce6bda69189e9f4ff278a5e181691cd695f753ae"
 		}
 	]
 }
