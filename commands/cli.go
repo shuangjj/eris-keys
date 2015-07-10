@@ -4,15 +4,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
 	"strings"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/howeyc/gopass"
 )
 
-func cliServer(c *cli.Context) {
-	host, port := c.String("host"), c.String("port")
+func cliServer(cmd *cobra.Command, args []string) {
+	host, port := KeyHost, KeyPort
 	IfExit(ListenAndServe(host, port))
 }
 
@@ -26,9 +26,10 @@ func hiddenAuth(authB bool) string {
 	return auth
 }
 
-func cliKeygen(c *cli.Context) {
-	dir, authB, keyType, name := c.String("dir"), c.Bool("auth"), c.String("type"), c.String("name")
-	auth := hiddenAuth(authB)
+func cliKeygen(cmd *cobra.Command, args []string) {
+	dir, authB, keyType, name := KeysDir, KeyAuth, KeyType, KeyName
+	//auth := hiddenAuth(authB)
+	auth := authB
 	if UseDaemon {
 		r, err := Call("gen", map[string]string{"dir": dir, "auth": auth, "type": keyType, "name": name})
 		if _, ok := err.(ErrConnectionRefused); !ok {
@@ -45,9 +46,9 @@ func cliKeygen(c *cli.Context) {
 	logger.Printf("%X\n", addr)
 }
 
-func cliPub(c *cli.Context) {
-	authB, dir, addr, name := c.Bool("auth"), c.String("dir"), c.String("addr"), c.String("name")
-	auth := hiddenAuth(authB)
+func cliPub(cmd *cobra.Command, args []string) {
+	auth, dir, addr, name := KeyAuth, KeysDir, KeyAddr, KeyName
+	//auth := hiddenAuth(authB)
 	if UseDaemon {
 		r, err := Call("pub", map[string]string{"dir": dir, "auth": auth, "addr": addr, "name": name})
 		if _, ok := err.(ErrConnectionRefused); !ok {
@@ -62,10 +63,9 @@ func cliPub(c *cli.Context) {
 	fmt.Printf("%X\n", pub)
 }
 
-func cliSign(c *cli.Context) {
-	args := c.Args()
-	authB, dir, addr, name := c.Bool("auth"), c.String("dir"), c.String("addr"), c.String("name")
-	auth := hiddenAuth(authB)
+func cliSign(cmd *cobra.Command, args []string) {
+	auth, dir, addr, name := KeyAuth, KeysDir, KeyAddr, KeyName
+	//auth := hiddenAuth(authB)
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter a msg/hash to sign"))
 	}
@@ -85,10 +85,9 @@ func cliSign(c *cli.Context) {
 	fmt.Printf("%X\n", sig)
 }
 
-func cliVerify(c *cli.Context) {
-	args := c.Args()
-	authB, dir, addr, name := c.Bool("auth"), c.String("dir"), c.String("addr"), c.String("name")
-	auth := hiddenAuth(authB)
+func cliVerify(cmd *cobra.Command, args []string) {
+	auth, dir, addr, name := KeyAuth, KeysDir, KeyAddr, KeyName
+	//auth := hiddenAuth(authB)
 	if len(args) != 2 {
 		Exit(fmt.Errorf("enter a msg/hash and a signature"))
 	}
@@ -107,12 +106,11 @@ func cliVerify(c *cli.Context) {
 	fmt.Println(res)
 }
 
-func cliHash(c *cli.Context) {
-	args := c.Args()
+func cliHash(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter something to hash"))
 	}
-	typ, hexD := c.String("type"), c.Bool("hex")
+	typ, hexD := KeyType, HexByte
 	msg := args[0]
 	if UseDaemon {
 		r, err := Call("hash", map[string]string{"type": typ, "msg": msg, "hex": fmt.Sprintf("%v", hexD)})
@@ -127,14 +125,13 @@ func cliHash(c *cli.Context) {
 	fmt.Printf("%X\n", hash)
 }
 
-func cliImport(c *cli.Context) {
-	args := c.Args()
+func cliImport(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter a private key or filename"))
 	}
-	authB, dir, name := c.Bool("auth"), c.String("dir"), c.String("name")
-	auth := hiddenAuth(authB)
-	keyType := c.String("type")
+	auth, dir, name := KeyAuth, KeysDir, KeyName
+	//auth := hiddenAuth(authB)
+	keyType := KeyType
 	key := args[0]
 	if UseDaemon {
 		r, err := Call("import", map[string]string{"dir": dir, "auth": auth, "name": name, "type": keyType, "key": key})
@@ -154,7 +151,7 @@ func cliImport(c *cli.Context) {
 	fmt.Printf("%X\n", addr)
 }
 
-func cliName(c *cli.Context) {
+func cliName(cmd *cobra.Command, args []string) {
 	/*
 		Options:
 		- add/modify: eris-keys name <name> <address>
@@ -162,13 +159,13 @@ func cliName(c *cli.Context) {
 		- rm (name): eris-keys name --rm <name>
 		- ls: eris-keys name --ls
 	*/
-	dir, rm, ls := c.String("dir"), c.Bool("rm"), c.Bool("ls")
+	dir, rm, ls := KeysDir, RmKeyName, LsNameAddr
 	var name, addr string
-	if len(c.Args()) > 0 {
-		name = c.Args()[0]
+	if len(args) > 0 {
+		name = args[0]
 	}
-	if len(c.Args()) > 1 {
-		addr = c.Args()[1]
+	if len(args) > 1 {
+		addr = args[1]
 	}
 
 	if UseDaemon {
@@ -213,7 +210,7 @@ func cliName(c *cli.Context) {
 	}
 
 	if addr != "" {
-		addr := c.Args()[1]
+		addr := args[1]
 		IfExit(coreNameAdd(dir, name, strings.ToUpper(addr)))
 	} else {
 		addr, err := coreNameGet(dir, name)

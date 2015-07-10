@@ -9,9 +9,8 @@ import (
 	// "sort"
 	"strings"
 
-	ekcmds "github.com/eris-ltd/eris-keys/commands"
-
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
+	"github.com/eris-ltd/eris-keys/commands"
 )
 
 const (
@@ -29,16 +28,16 @@ title:      "Documentation | eris:keys | {{}}"
 )
 
 // // Needed to sort properly
-// type byName []*cli.Command
+// type byName []*cobra.Command
 // func (s byName) Len() int           { return len(s) }
 // func (s byName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 // func (s byName) Less(i, j int) bool { return s[i].Name < s[j].Name }
 
-func GenerateSingle(cmd *cli.Command, out *bytes.Buffer, linkHandler func(string) string, specs []string) {
-	name := cmd.Name
+func GenerateSingle(cmd *cobra.Command, out *bytes.Buffer, linkHandler func(string) string, specs []string) {
+	name := cmd.CommandPath()
 
-	short := cmd.Usage
-	long := cmd.Description
+	short := cmd.Short
+	long := cmd.Long
 	if len(long) == 0 {
 		long = short
 	}
@@ -74,18 +73,18 @@ func GenerateSingle(cmd *cli.Command, out *bytes.Buffer, linkHandler func(string
 	// 	fmt.Fprintf(out, "```\n\n")
 	// }
 
-	if len(cmd.Subcommands) > 0 {
+	if len(cmd.Commands()) > 0 {
 		fmt.Fprintf(out, "## Subcommands\n\n")
-		children := cmd.Subcommands
+		children := cmd.Commands()
 
 		for _, child := range children {
 			// if len(child.Deprecated) > 0 {
 			// 	continue
 			// }
-			cname := name + " " + child.Name
+			cname := name + " " + child.Name()
 			link := cname + ".md"
 			link = strings.Replace(link, " ", "_", -1)
-			fmt.Fprintf(out, "* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Usage)
+			fmt.Fprintf(out, "* [%s](%s)\t - %s\n", cname, linkHandler(link), child.Short)
 		}
 	}
 
@@ -115,7 +114,7 @@ func GenerateSingle(cmd *cli.Command, out *bytes.Buffer, linkHandler func(string
 	fmt.Fprintf(out, "\n")
 }
 
-func GenerateTree(cmd *cli.Command, dir string, specs []string) {
+func GenerateTree(cmd *cobra.Command, dir string, specs []string) {
 	filePrepender := func(s string) string {
 		s = strings.Replace(s, RENDER_DIR, "", 1)
 		s = strings.Replace(s, ".md", "", -1)
@@ -130,14 +129,14 @@ func GenerateTree(cmd *cli.Command, dir string, specs []string) {
 		return link
 	}
 
-	for _, c := range cmd.Subcommands {
-		GenerateTree(&c, dir, specs)
+	for _, c := range cmd.Commands() {
+		GenerateTree(c, dir, specs)
 	}
 	out := new(bytes.Buffer)
 
 	GenerateSingle(cmd, out, linkHandler, specs)
 
-	filename := cmd.Name
+	filename := cmd.CommandPath()
 	filename = dir + strings.Replace(filename, " ", "_", -1) + ".md"
 	outFile, err := os.Create(filename)
 	if err != nil {
@@ -197,9 +196,10 @@ func GenerateSpecs(dir string) []string {
 
 func main() {
 	os.MkdirAll(RENDER_DIR, 0775)
-	eris := ekcmds.DefineApp().Commands
+	eris := commands.EKeys
+	//commands.AddCommand()
 	specs := GenerateSpecs(SPECS_DIR)
-	for _, e := range eris {
-		GenerateTree(&e, RENDER_DIR, specs)
-	}
+	//	for _, e := range eris {
+	GenerateTree(eris, RENDER_DIR, specs)
+	//	}
 }

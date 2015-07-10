@@ -3,7 +3,6 @@ package commands
 import (
 	"os"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
 )
@@ -22,193 +21,135 @@ var (
 
 	DaemonAddr = DefaultAddr
 	UseDaemon  = true
+	//flag vars
+	//global
+	KeysDir = ""
+	KeyAuth = ""
+	KeyName = ""
+	KeyAddr = ""
+	KeyHost = ""
+	KeyPort = ""
+	//keygenCmd only
+	KeyType = ""
+	//hashCmd only
+	HashType = ""
+	HexByte  = false
+	//nameCmd only
+	RmKeyName  = false
+	LsNameAddr = false
 )
 
-func DefineApp() *cli.App {
-	app := cli.NewApp()
-	app.Name = "eris-keys"
-	app.Usage = "Generate and manage keys for producing signatures"
-	app.Version = "0.1.1"
-	app.Author = "Ethan Buchman"
-	app.Email = "ethan@erisindustries.com"
-	app.Before = before
-	app.After = after
-	app.Flags = []cli.Flag{
-		debugFlag,
-	}
-
-	app.Commands = []cli.Command{
-		keygenCmd,
-		signCmd,
-		verifyCmd,
-		pubKeyCmd,
-		hashCmd,
-		serverCmd,
-		importCmd,
-		nameCmd,
-	}
-	return app
+var EKeys = &cobra.Command{
+	Use:   "eris-keys",
+	Short: "Generate and manage keys for producing signatures",
+	Long:  "A tool for doing a bunch of cool stuff with keys.",
+	Run:   func(cmd *cobra.Command, args []string) { cmd.Help() },
 }
 
-var (
-	keygenCmd = cli.Command{
-		Name:   "gen",
-		Usage:  "generate a key",
-		Action: cliKeygen,
-		Flags: []cli.Flag{
-			keyTypeFlag,
-			dirFlag,
-			authFlag,
-			nameFlag,
-		},
-	}
+func Execute() {
+	buildKeysCommand()
+	EKeys.Execute()
+}
+func buildKeysCommand() {
+	EKeys.AddCommand(keygenCmd)
+	EKeys.AddCommand(nameCmd)
+	EKeys.AddCommand(signCmd)
+	EKeys.AddCommand(pubKeyCmd)
+	EKeys.AddCommand(verifyCmd)
+	EKeys.AddCommand(hashCmd)
+	EKeys.AddCommand(serverCmd)
+	EKeys.AddCommand(importCmd)
+	addKeysFlags()
+}
 
-	nameCmd = cli.Command{
-		Name:   "name",
-		Usage:  "manage key names. `eris-keys name <name> <address>`",
-		Action: cliName,
-		Flags: []cli.Flag{
-			dirFlag,
-			rmFlag,
-			lsFlag,
-		},
-	}
+var keygenCmd = &cobra.Command{
+	Use:   "gen",
+	Short: "Generate a key",
+	Long:  "Generates a key using (insert crypto pkgs used)",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliKeygen(cmd, args)
+	},
+}
 
-	signCmd = cli.Command{
-		Name:   "sign",
-		Usage:  "eris-keys sign --addr <address> <hash>",
-		Action: cliSign,
-		Flags: []cli.Flag{
-			dirFlag,
-			authFlag,
-			nameFlag,
-			addrFlag,
-		},
-	}
+var nameCmd = &cobra.Command{
+	Use:   "name",
+	Short: "Manage key names. `eris-keys name <name> <address>`",
+	Long:  "Manage key names. `eris-keys name <name> <address>`",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliName(cmd, args)
+	},
+}
 
-	pubKeyCmd = cli.Command{
-		Name:   "pub",
-		Usage:  "eris-keys pub --addr <addr>",
-		Action: cliPub,
-		Flags: []cli.Flag{
-			dirFlag,
-			authFlag,
-			nameFlag,
-			addrFlag,
-		},
-	}
+var signCmd = &cobra.Command{
+	Use:   "sign",
+	Short: "eris-keys sign --addr <address> <hash>",
+	Long:  "eris-keys sign --addr <address> <hash>",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliSign(cmd, args)
+	},
+}
 
-	verifyCmd = cli.Command{
-		Name:   "verify",
-		Usage:  "eris-keys verify --addr <addr> <hash> <sig>",
-		Action: cliVerify,
-		Flags: []cli.Flag{
-			dirFlag,
-			authFlag,
-			nameFlag,
-			addrFlag,
-		},
-	}
+var pubKeyCmd = &cobra.Command{
+	Use:   "pub",
+	Short: "eris-keys pub --addr <addr>",
+	Long:  "eris-keys pub --addr <addr>",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliPub(cmd, args)
+	},
+}
 
-	hashCmd = cli.Command{
-		Name:   "hash",
-		Usage:  "eris-keys hash <some data>",
-		Action: cliHash,
-		Flags: []cli.Flag{
-			hashTypeFlag,
-			hexFlag,
-		},
-	}
+var verifyCmd = &cobra.Command{
+	Use:   "verify",
+	Short: "eris-keys verify --addr <addr> <hash> <sig>",
+	Long:  "eris-keys verify --addr <addr> <hash> <sig>",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliVerify(cmd, args)
+	},
+}
+var hashCmd = &cobra.Command{
+	Use:   "hash",
+	Short: "eris-keys hash <some data>",
+	Long:  "eris-keys hash <some data>",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliHash(cmd, args)
+	},
+}
+var serverCmd = &cobra.Command{
+	Use:   "server",
+	Short: "eris-keys server",
+	Long:  "eris-keys server",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliServer(cmd, args)
+	},
+}
+var importCmd = &cobra.Command{
+	Use:   "import",
+	Short: "eris-keys import <priv key>",
+	Long:  "eris-keys import <priv key>",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliImport(cmd, args)
+	},
+}
 
-	serverCmd = cli.Command{
-		Name:   "server",
-		Usage:  "eris-keys server",
-		Action: cliServer,
-		Flags: []cli.Flag{
-			hostFlag,
-			portFlag,
-		},
-	}
+func addKeysFlags() {
+	EKeys.PersistentFlags().StringVarP(&KeysDir, "dir", "", DefaultDir, "specify the location of the directory containing key files")
+	EKeys.PersistentFlags().StringVarP(&KeyAuth, "auth", "", DefaultAuth, "a password to be used for encrypting keys")
+	EKeys.PersistentFlags().StringVarP(&KeyName, "name", "", "", "name of key to use")
+	EKeys.PersistentFlags().StringVarP(&KeyAddr, "addr", "", "", "address of key to use")
+	EKeys.PersistentFlags().StringVarP(&KeyHost, "host", "", DefaultHost, "set the host for key daemon to listen on")
+	EKeys.PersistentFlags().StringVarP(&KeyPort, "port", "", DefaultPort, "set the host for key daemon to listen on")
 
-	importCmd = cli.Command{
-		Name:   "import",
-		Usage:  "eris-keys import <priv key>",
-		Action: cliImport,
-		Flags: []cli.Flag{
-			keyTypeFlag,
-			dirFlag,
-			authFlag,
-			nameFlag,
-		},
-	}
+	keygenCmd.Flags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "specify the type of key to create. Supports 'secp256k1,sha3' (ethereum),  'secp256k1,ripemd160sha2' (bitcoin), 'ed25519,ripemd160' (tendermint)")
+	hashCmd.PersistentFlags().StringVarP(&HashType, "type", "t", DefaultHashType, "specify the hash function to use")
+	hashCmd.PersistentFlags().BoolVarP(&HexByte, "hex", "", false, "the input should be hex decoded to bytes first")
 
-	keyTypeFlag = cli.StringFlag{
-		Name:  "type",
-		Value: DefaultKeyType,
-		Usage: "specify the type of key to create. Supports 'secp256k1,sha3' (ethereum),  'secp256k1,ripemd160sha2' (bitcoin), 'ed25519,ripemd160' (tendermint)",
-	}
+	//not sure if importCmd is correct. Check cliImport for more details
+	importCmd.PersistentFlags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "import a key")
 
-	hashTypeFlag = cli.StringFlag{
-		Name:  "type",
-		Value: DefaultHashType,
-		Usage: "specify the hash function to use",
-	}
+	nameCmd.PersistentFlags().BoolVarP(&RmKeyName, "rm", "", false, "removes a key's name")
+	nameCmd.PersistentFlags().BoolVarP(&LsNameAddr, "ls", "", false, "list all <name>:<address> pairs + un-named addresses")
 
-	dirFlag = cli.StringFlag{
-		Name:  "dir",
-		Value: DefaultDir,
-		Usage: "specify the location of the directory containing key files",
-	}
-
-	authFlag = cli.BoolFlag{
-		Name:  "auth",
-		Usage: "a password to be used for encrypting keys",
-	}
-
-	addrFlag = cli.StringFlag{
-		Name:  "addr",
-		Value: "",
-		Usage: "address of key to use",
-	}
-
-	nameFlag = cli.StringFlag{
-		Name:  "name",
-		Value: "",
-		Usage: "name of key to use",
-	}
-
-	hostFlag = cli.StringFlag{
-		Name:  "host",
-		Value: DefaultHost,
-		Usage: "set the host for key daemon to listen on",
-	}
-
-	portFlag = cli.StringFlag{
-		Name:  "port",
-		Value: DefaultPort,
-		Usage: "set the port for key daemon to listen on",
-	}
-
-	rmFlag = cli.BoolFlag{
-		Name:  "rm",
-		Usage: "remove a key's name",
-	}
-
-	lsFlag = cli.BoolFlag{
-		Name:  "ls",
-		Usage: "list all <name>:<address> pairs + un-named addresses",
-	}
-
-	hexFlag = cli.BoolFlag{
-		Name:  "hex",
-		Usage: "the input should be hex decoded to bytes first",
-	}
-
-	debugFlag = cli.BoolFlag{
-		Name:  "debug",
-		Usage: "print debug messages",
-	}
-)
+}
 
 func before(c *cli.Context) error {
 	var level int
