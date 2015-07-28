@@ -16,7 +16,7 @@ dependencies:
 
 test:
   override:
-    - go test ./...
+    - go test ./commands
     - docker build -t eris/keys-test -f DockerfileTest .
     - docker run -it eris/keys-test ./test.sh
 

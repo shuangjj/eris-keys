@@ -1,5 +1,5 @@
 #! /bin/bash
-killall eris-keys
+killall eris-keys 2>&1 /dev/null
 set -e
 
 # we test keys, hashes, names, and import

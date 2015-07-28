@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/binary"
+	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/merkle"
+	ptypes "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/permission/types"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
 )
 
 // Signable is an interface for all signable things.
@@ -20,28 +22,30 @@ func SignBytes(chainID string, o Signable) []byte {
 	buf, n, err := new(bytes.Buffer), new(int64), new(error)
 	o.WriteSignBytes(chainID, buf, n, err)
 	if *err != nil {
-		panic(err)
+		PanicCrisis(err)
 	}
 	return buf.Bytes()
 }
 
 // HashSignBytes is a convenience method for getting the hash of the bytes of a signable
 func HashSignBytes(chainID string, o Signable) []byte {
-	return merkle.HashFromBinary(SignBytes(chainID, o))
+	return merkle.SimpleHashFromBinary(SignBytes(chainID, o))
 }
 
 //-----------------------------------------------------------------------------
 
 // Account resides in the application state, and is mutated by transactions
 // on the blockchain.
-// Serialized by binary.[read|write]Reflect
+// Serialized by wire.[read|write]Reflect
 type Account struct {
 	Address     []byte `json:"address"`
 	PubKey      PubKey `json:"pub_key"`
-	Sequence    uint   `json:"sequence"`
-	Balance     uint64 `json:"balance"`
+	Sequence    int    `json:"sequence"`
+	Balance     int64  `json:"balance"`
 	Code        []byte `json:"code"`         // VM code
 	StorageRoot []byte `json:"storage_root"` // VM storage merkle root.
+
+	Permissions ptypes.AccountPermissions `json:"permissions"`
 }
 
 func (acc *Account) Copy() *Account {
@@ -50,18 +54,21 @@ func (acc *Account) Copy() *Account {
 }
 
 func (acc *Account) String() string {
-	return fmt.Sprintf("Account{%X:%v C:%v S:%X}", acc.Address, acc.PubKey, len(acc.Code), acc.StorageRoot)
+	if acc == nil {
+		return "nil-Account"
+	}
+	return fmt.Sprintf("Account{%X:%v B:%v C:%v S:%X P:%s}", acc.Address, acc.PubKey, acc.Balance, len(acc.Code), acc.StorageRoot, acc.Permissions)
 }
 
 func AccountEncoder(o interface{}, w io.Writer, n *int64, err *error) {
-	binary.WriteBinary(o.(*Account), w, n, err)
+	wire.WriteBinary(o.(*Account), w, n, err)
 }
 
 func AccountDecoder(r io.Reader, n *int64, err *error) interface{} {
-	return binary.ReadBinary(&Account{}, r, n, err)
+	return wire.ReadBinary(&Account{}, r, n, err)
 }
 
-var AccountCodec = binary.Codec{
+var AccountCodec = wire.Codec{
 	Encode: AccountEncoder,
 	Decode: AccountDecoder,
 }

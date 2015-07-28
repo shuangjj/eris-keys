@@ -324,7 +324,7 @@ func keyFromPrivEd25519(addrType AddrType, priv []byte) (*Key, error) {
 	privKeyBytes := new([64]byte)
 	copy(privKeyBytes[:32], priv)
 	pubKeyBytes := ed25519.MakePublicKey(privKeyBytes)
-	pubKey := account.PubKeyEd25519(pubKeyBytes[:])
+	pubKey := account.PubKeyEd25519(*pubKeyBytes)
 	return &Key{
 		Id:         uuid.NewRandom(),
 		Type:       KeyType{CurveTypeEd25519, addrType},
@@ -351,12 +351,11 @@ func signSecp256k1(k *Key, hash []byte) ([]byte, error) {
 
 func signEd25519(k *Key, hash []byte) ([]byte, error) {
 	priv := k.PrivateKey
-	var privKeyBytes [64]byte
-	copy(privKeyBytes[:32], priv)
-	privKey := account.PrivKeyEd25519(privKeyBytes[:])
+	var privKey account.PrivKeyEd25519
+	copy(privKey[:], priv)
 	sig := privKey.Sign(hash)
-	sigB := []byte(sig.(account.SignatureEd25519))
-	return sigB, nil
+	sigB := sig.(account.SignatureEd25519)
+	return sigB[:], nil
 }
 
 func verifySigSecp256k1(k *Key, hash, sig []byte) (bool, error) {

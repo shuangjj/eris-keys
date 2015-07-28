@@ -71,7 +71,6 @@ func testServerSignAndVerify(t *testing.T, typ string) {
 	hash := crypto.Sha3([]byte("the hash of something!"))
 
 	body2 := formatForBody(map[string]string{"hash": toHex(hash), "addr": addr})
-	req, _ = http.NewRequest("POST", TestAddr+"/gen", body2)
 	req, _ = http.NewRequest("POST", TestAddr+"/sign", body2)
 	sig, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
@@ -82,10 +81,8 @@ func testServerSignAndVerify(t *testing.T, typ string) {
 	checkErrs(t, errS, err)
 
 	if res != "true" {
-		t.Fatalf("Signature failed to verify. Sig %s, Hash %s, Addr %s", sig, toHex(hash), addr)
+		t.Fatalf("Signature (type %s) failed to verify.\nResponse: %s\nSig %s, Hash %s, Addr %s", typ, res, sig, toHex(hash), addr)
 	}
-
-	fmt.Printf("Sig: %X, %v\n", sig, res)
 }
 
 func TestServerSignAndVerify(t *testing.T) {

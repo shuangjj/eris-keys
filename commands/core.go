@@ -137,6 +137,7 @@ func coreKeygen(dir, auth, keyType string) ([]byte, error) {
 }
 
 func coreSign(dir, auth, hash, addr string) ([]byte, error) {
+
 	hashB, err := hex.DecodeString(hash)
 	if err != nil {
 		return nil, fmt.Errorf("hash is invalid hex: %s", err.Error())

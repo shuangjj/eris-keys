@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
-	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/binary"
+	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
@@ -58,7 +58,9 @@ func testSignAndVerify(t *testing.T, typ string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Printf("Sig: %X, %v\n", sig, res)
+	if res != true {
+		t.Fatalf("Signature (type %s) failed to verify.\nResponse: %v\nSig %x, Hash %x, Addr %x", typ, res, sig, hash, addr)
+	}
 }
 
 func TestSignAndVerify(t *testing.T) {
@@ -113,7 +115,9 @@ func checkAddrFromPub(typ string, pub, addr []byte) error {
 	case "ed25519,ripemd160":
 		// XXX: something weird here. I have seen this oscillate!
 		// addr2 = binary.BinaryRipemd160(pub)
-		addr2 = account.PubKeyEd25519(pub).Address()
+		var pubArray account.PubKeyEd25519
+		copy(pubArray[:], pub)
+		addr2 = pubArray.Address()
 	default:
 		return fmt.Errorf("Unknown or incomplete typ %s", typ)
 	}

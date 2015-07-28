@@ -6,7 +6,7 @@ This documentation is out of date.
 * Pointers that don't have a declared TypeByte() are
   encoded with a leading 0x00 (nil) or 0x01.
 
-# `tendermint/binary`
+# `tendermint/wire`
 
 The `binary` submodule encodes primary types and structs into bytes.
 
@@ -78,7 +78,7 @@ WriteBinary(foo, buf, n, err)
 foo2 := ReadBinary(Foo{}, buf, n, err).(Foo)
 
 // Or, to decode onto a pointer:
-foo2 := ReadBinary(&Foo{}, buf, n, err).(*Foo)
+foo2 := ReadBinaryPtr(&Foo{}, buf, n, err).(*Foo)
 ```
 
 WriteBinary and ReadBinary can encode/decode structs recursively. However, interface field

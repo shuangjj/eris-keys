@@ -1,4 +1,4 @@
-package binary
+package wire
 
 import (
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/log15"

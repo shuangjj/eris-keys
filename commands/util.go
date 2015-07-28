@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common"
+	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 )
 
 // most commands require at least one of --name or --addr

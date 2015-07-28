@@ -1,4 +1,4 @@
-package binary
+package wire
 
 import (
 	"encoding/hex"
@@ -66,11 +66,11 @@ func (info StructFieldInfo) unpack() (int, reflect.Type, Options) {
 	return info.Index, info.Type, info.Options
 }
 
-// e.g. If o is struct{Foo}{}, return is the Foo interface type.
+// e.g. If o is struct{Foo}{}, return is the Foo reflection type.
 func GetTypeFromStructDeclaration(o interface{}) reflect.Type {
 	rt := reflect.TypeOf(o)
 	if rt.NumField() != 1 {
-		panic("Unexpected number of fields in struct-wrapped declaration of type")
+		PanicSanity("Unexpected number of fields in struct-wrapped declaration of type")
 	}
 	return rt.Field(0).Type
 }
@@ -78,7 +78,7 @@ func GetTypeFromStructDeclaration(o interface{}) reflect.Type {
 func SetByteForType(typeByte byte, rt reflect.Type) {
 	typeInfo := GetTypeInfo(rt)
 	if typeInfo.Byte != 0x00 && typeInfo.Byte != typeByte {
-		panic(Fmt("Type %v already registered with type byte %X", rt, typeByte))
+		PanicSanity(Fmt("Type %v already registered with type byte %X", rt, typeByte))
 	}
 	typeInfo.Byte = typeByte
 	// If pointer, we need to set it for the concrete type as well.
@@ -122,7 +122,7 @@ type ConcreteType struct {
 func RegisterInterface(o interface{}, ctypes ...ConcreteType) *TypeInfo {
 	it := GetTypeFromStructDeclaration(o)
 	if it.Kind() != reflect.Interface {
-		panic("RegisterInterface expects an interface")
+		PanicSanity("RegisterInterface expects an interface")
 	}
 	toType := make(map[byte]reflect.Type, 0)
 	toByte := make(map[reflect.Type]byte, 0)
@@ -131,10 +131,10 @@ func RegisterInterface(o interface{}, ctypes ...ConcreteType) *TypeInfo {
 		typeByte := ctype.Byte
 		SetByteForType(typeByte, crt)
 		if typeByte == 0x00 {
-			panic(Fmt("Byte of 0x00 is reserved for nil (%v)", ctype))
+			PanicSanity(Fmt("Byte of 0x00 is reserved for nil (%v)", ctype))
 		}
 		if toType[typeByte] != nil {
-			panic(Fmt("Duplicate Byte for type %v and %v", ctype, toType[typeByte]))
+			PanicSanity(Fmt("Duplicate Byte for type %v and %v", ctype, toType[typeByte]))
 		}
 		toType[typeByte] = crt
 		toByte[crt] = typeByte
@@ -177,6 +177,8 @@ func MakeTypeInfo(rt reflect.Type) *TypeInfo {
 	return info
 }
 
+// Contract: Caller must ensure that rt is supported
+// (e.g. is recursively composed of supported native types, and structs and slices.)
 func readReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, r io.Reader, n *int64, err *error) {
 
 	// Get typeInfo
@@ -226,6 +228,9 @@ func readReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, r io.Rea
 		typeInfo = GetTypeInfo(rt)
 		if typeInfo.Byte != 0x00 {
 			r = NewPrefixedReader([]byte{typeByte}, r)
+		} else if typeByte != 0x01 {
+			*err = errors.New(Fmt("Unexpected type byte %X for ptr of untyped thing", typeByte))
+			return
 		}
 		// continue...
 	}
@@ -240,18 +245,45 @@ func readReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, r io.Rea
 	}
 
 	switch rt.Kind() {
+	case reflect.Array:
+		elemRt := rt.Elem()
+		length := rt.Len()
+		if elemRt.Kind() == reflect.Uint8 {
+			// Special case: Bytearrays
+			buf := make([]byte, length)
+			ReadFull(buf, r, n, err)
+			if *err != nil {
+				return
+			}
+			log.Info("Read bytearray", "bytes", buf)
+			reflect.Copy(rv, reflect.ValueOf(buf))
+		} else {
+			for i := 0; i < length; i++ {
+				elemRv := rv.Index(i)
+				readReflectBinary(elemRv, elemRt, opts, r, n, err)
+				if *err != nil {
+					return
+				}
+				if MaxBinaryReadSize < *n {
+					*err = ErrBinaryReadSizeOverflow
+					return
+				}
+			}
+			log.Info(Fmt("Read %v-array", elemRt), "length", length)
+		}
+
 	case reflect.Slice:
 		elemRt := rt.Elem()
 		if elemRt.Kind() == reflect.Uint8 {
 			// Special case: Byteslices
 			byteslice := ReadByteSlice(r, n, err)
-			log.Debug("Read byteslice", "bytes", byteslice)
+			log.Info("Read byteslice", "bytes", byteslice)
 			rv.Set(reflect.ValueOf(byteslice))
 		} else {
 			var sliceRv reflect.Value
 			// Read length
-			length := int(ReadUvarint(r, n, err))
-			log.Debug(Fmt("Read length: %v", length))
+			length := ReadVarint(r, n, err)
+			log.Info(Fmt("Read length: %v", length))
 			sliceRv = reflect.MakeSlice(rt, 0, 0)
 			// read one ReflectSliceChunk at a time and append
 			for i := 0; i*ReflectSliceChunk < length; i++ {
@@ -261,6 +293,10 @@ func readReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, r io.Rea
 					elemRv := tmpSliceRv.Index(j)
 					readReflectBinary(elemRv, elemRt, opts, r, n, err)
 					if *err != nil {
+						return
+					}
+					if MaxBinaryReadSize < *n {
+						*err = ErrBinaryReadSizeOverflow
 						return
 					}
 				}
@@ -274,7 +310,7 @@ func readReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, r io.Rea
 		if rt == timeType {
 			// Special case: time.Time
 			t := ReadTime(r, n, err)
-			log.Debug(Fmt("Read time: %v", t))
+			log.Info(Fmt("Read time: %v", t))
 			rv.Set(reflect.ValueOf(t))
 		} else {
 			for _, fieldInfo := range typeInfo.Fields {
@@ -286,78 +322,78 @@ func readReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, r io.Rea
 
 	case reflect.String:
 		str := ReadString(r, n, err)
-		log.Debug(Fmt("Read string: %v", str))
+		log.Info(Fmt("Read string: %v", str))
 		rv.SetString(str)
 
 	case reflect.Int64:
 		if opts.Varint {
 			num := ReadVarint(r, n, err)
-			log.Debug(Fmt("Read num: %v", num))
+			log.Info(Fmt("Read num: %v", num))
 			rv.SetInt(int64(num))
 		} else {
 			num := ReadInt64(r, n, err)
-			log.Debug(Fmt("Read num: %v", num))
+			log.Info(Fmt("Read num: %v", num))
 			rv.SetInt(int64(num))
 		}
 
 	case reflect.Int32:
 		num := ReadUint32(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetInt(int64(num))
 
 	case reflect.Int16:
 		num := ReadUint16(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetInt(int64(num))
 
 	case reflect.Int8:
 		num := ReadUint8(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetInt(int64(num))
 
 	case reflect.Int:
 		num := ReadVarint(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetInt(int64(num))
 
 	case reflect.Uint64:
 		if opts.Varint {
-			num := ReadUvarint(r, n, err)
-			log.Debug(Fmt("Read num: %v", num))
+			num := ReadVarint(r, n, err)
+			log.Info(Fmt("Read num: %v", num))
 			rv.SetUint(uint64(num))
 		} else {
 			num := ReadUint64(r, n, err)
-			log.Debug(Fmt("Read num: %v", num))
+			log.Info(Fmt("Read num: %v", num))
 			rv.SetUint(uint64(num))
 		}
 
 	case reflect.Uint32:
 		num := ReadUint32(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetUint(uint64(num))
 
 	case reflect.Uint16:
 		num := ReadUint16(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetUint(uint64(num))
 
 	case reflect.Uint8:
 		num := ReadUint8(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetUint(uint64(num))
 
 	case reflect.Uint:
-		num := ReadUvarint(r, n, err)
-		log.Debug(Fmt("Read num: %v", num))
+		num := ReadVarint(r, n, err)
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetUint(uint64(num))
 
 	case reflect.Bool:
 		num := ReadUint8(r, n, err)
-		log.Debug(Fmt("Read bool: %v", num))
+		log.Info(Fmt("Read bool: %v", num))
 		rv.SetBool(num > 0)
 
 	default:
-		panic(Fmt("Unknown field type %v", rt.Kind()))
+		PanicSanity(Fmt("Unknown field type %v", rt.Kind()))
 	}
 }
 
@@ -405,6 +441,9 @@ func writeReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, w io.Wr
 		rv, rt = rv.Elem(), rt.Elem()
 		typeInfo = GetTypeInfo(rt)
 		if !rv.IsValid() {
+			// For better compatibility with other languages,
+			// as far as tendermint/wire is concerned,
+			// pointers to nil values are the same as nil.
 			WriteByte(0x00, w, n, err)
 			return
 		}
@@ -423,6 +462,27 @@ func writeReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, w io.Wr
 
 	// All other types
 	switch rt.Kind() {
+	case reflect.Array:
+		elemRt := rt.Elem()
+		length := rt.Len()
+		if elemRt.Kind() == reflect.Uint8 {
+			// Special case: Bytearrays
+			if rv.CanAddr() {
+				byteslice := rv.Slice(0, length).Bytes()
+				WriteTo(byteslice, w, n, err)
+			} else {
+				buf := make([]byte, length)
+				reflect.Copy(reflect.ValueOf(buf), rv)
+				WriteTo(buf, w, n, err)
+			}
+		} else {
+			// Write elems
+			for i := 0; i < length; i++ {
+				elemRv := rv.Index(i)
+				writeReflectBinary(elemRv, elemRt, opts, w, n, err)
+			}
+		}
+
 	case reflect.Slice:
 		elemRt := rt.Elem()
 		if elemRt.Kind() == reflect.Uint8 {
@@ -432,7 +492,7 @@ func writeReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, w io.Wr
 		} else {
 			// Write length
 			length := rv.Len()
-			WriteUvarint(uint(length), w, n, err)
+			WriteVarint(length, w, n, err)
 			// Write elems
 			for i := 0; i < length; i++ {
 				elemRv := rv.Index(i)
@@ -501,7 +561,7 @@ func writeReflectBinary(rv reflect.Value, rt reflect.Type, opts Options, w io.Wr
 		}
 
 	default:
-		panic(Fmt("Unknown field type %v", rt.Kind()))
+		PanicSanity(Fmt("Unknown field type %v", rt.Kind()))
 	}
 }
 
@@ -523,6 +583,8 @@ func readByteJSON(o interface{}) (typeByte byte, rest interface{}, err error) {
 	return
 }
 
+// Contract: Caller must ensure that rt is supported
+// (e.g. is recursively composed of supported native types, and structs and slices.)
 func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *error) {
 
 	// Get typeInfo
@@ -584,6 +646,44 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 	}
 
 	switch rt.Kind() {
+	case reflect.Array:
+		elemRt := rt.Elem()
+		length := rt.Len()
+		if elemRt.Kind() == reflect.Uint8 {
+			// Special case: Bytearrays
+			oString, ok := o.(string)
+			if !ok {
+				*err = errors.New(Fmt("Expected string but got type %v", reflect.TypeOf(o)))
+				return
+			}
+			buf, err_ := hex.DecodeString(oString)
+			if err_ != nil {
+				*err = err_
+				return
+			}
+			if len(buf) != length {
+				*err = errors.New(Fmt("Expected bytearray of length %v but got %v", length, len(buf)))
+				return
+			}
+			log.Info("Read bytearray", "bytes", buf)
+			reflect.Copy(rv, reflect.ValueOf(buf))
+		} else {
+			oSlice, ok := o.([]interface{})
+			if !ok {
+				*err = errors.New(Fmt("Expected array of %v but got type %v", rt, reflect.TypeOf(o)))
+				return
+			}
+			if len(oSlice) != length {
+				*err = errors.New(Fmt("Expected array of length %v but got %v", length, len(oSlice)))
+				return
+			}
+			for i := 0; i < length; i++ {
+				elemRv := rv.Index(i)
+				readReflectJSON(elemRv, elemRt, oSlice[i], err)
+			}
+			log.Info(Fmt("Read %v-array", elemRt), "length", length)
+		}
+
 	case reflect.Slice:
 		elemRt := rt.Elem()
 		if elemRt.Kind() == reflect.Uint8 {
@@ -598,7 +698,7 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 				*err = err_
 				return
 			}
-			log.Debug("Read byteslice", "bytes", byteslice)
+			log.Info("Read byteslice", "bytes", byteslice)
 			rv.Set(reflect.ValueOf(byteslice))
 		} else {
 			// Read length
@@ -608,7 +708,7 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 				return
 			}
 			length := len(oSlice)
-			log.Debug(Fmt("Read length: %v", length))
+			log.Info(Fmt("Read length: %v", length))
 			sliceRv := reflect.MakeSlice(rt, length, length)
 			// Read elems
 			for i := 0; i < length; i++ {
@@ -626,7 +726,7 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 				*err = errors.New(Fmt("Expected string but got type %v", reflect.TypeOf(o)))
 				return
 			}
-			log.Debug(Fmt("Read time: %v", str))
+			log.Info(Fmt("Read time: %v", str))
 			t, err_ := time.Parse(rfc2822, str)
 			if err_ != nil {
 				*err = err_
@@ -658,7 +758,7 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 			*err = errors.New(Fmt("Expected string but got type %v", reflect.TypeOf(o)))
 			return
 		}
-		log.Debug(Fmt("Read string: %v", str))
+		log.Info(Fmt("Read string: %v", str))
 		rv.SetString(str)
 
 	case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
@@ -667,7 +767,7 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 			*err = errors.New(Fmt("Expected numeric but got type %v", reflect.TypeOf(o)))
 			return
 		}
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetInt(int64(num))
 
 	case reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8, reflect.Uint:
@@ -680,7 +780,7 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 			*err = errors.New(Fmt("Expected unsigned numeric but got %v", num))
 			return
 		}
-		log.Debug(Fmt("Read num: %v", num))
+		log.Info(Fmt("Read num: %v", num))
 		rv.SetUint(uint64(num))
 
 	case reflect.Bool:
@@ -689,16 +789,16 @@ func readReflectJSON(rv reflect.Value, rt reflect.Type, o interface{}, err *erro
 			*err = errors.New(Fmt("Expected boolean but got type %v", reflect.TypeOf(o)))
 			return
 		}
-		log.Debug(Fmt("Read boolean: %v", bl))
+		log.Info(Fmt("Read boolean: %v", bl))
 		rv.SetBool(bl)
 
 	default:
-		panic(Fmt("Unknown field type %v", rt.Kind()))
+		PanicSanity(Fmt("Unknown field type %v", rt.Kind()))
 	}
 }
 
 func writeReflectJSON(rv reflect.Value, rt reflect.Type, w io.Writer, n *int64, err *error) {
-	log.Debug(Fmt("writeReflectJSON(%v, %v, %v, %v, %v)", rv, rt, w, n, err))
+	log.Info(Fmt("writeReflectJSON(%v, %v, %v, %v, %v)", rv, rt, w, n, err))
 
 	// Get typeInfo
 	typeInfo := GetTypeInfo(rt)
@@ -740,6 +840,9 @@ func writeReflectJSON(rv reflect.Value, rt reflect.Type, w io.Writer, n *int64, 
 		rv, rt = rv.Elem(), rt.Elem()
 		typeInfo = GetTypeInfo(rt)
 		if !rv.IsValid() {
+			// For better compatibility with other languages,
+			// as far as tendermint/wire is concerned,
+			// pointers to nil values are the same as nil.
 			WriteTo([]byte("null"), w, n, err)
 			return
 		}
@@ -754,13 +857,33 @@ func writeReflectJSON(rv reflect.Value, rt reflect.Type, w io.Writer, n *int64, 
 
 	// All other types
 	switch rt.Kind() {
+	case reflect.Array:
+		elemRt := rt.Elem()
+		length := rt.Len()
+		if elemRt.Kind() == reflect.Uint8 {
+			// Special case: Bytearray
+			bytearray := reflect.ValueOf(make([]byte, length))
+			reflect.Copy(bytearray, rv)
+			WriteTo([]byte(Fmt("\"%X\"", bytearray.Interface())), w, n, err)
+		} else {
+			WriteTo([]byte("["), w, n, err)
+			// Write elems
+			for i := 0; i < length; i++ {
+				elemRv := rv.Index(i)
+				writeReflectJSON(elemRv, elemRt, w, n, err)
+				if i < length-1 {
+					WriteTo([]byte(","), w, n, err)
+				}
+			}
+			WriteTo([]byte("]"), w, n, err)
+		}
+
 	case reflect.Slice:
 		elemRt := rt.Elem()
 		if elemRt.Kind() == reflect.Uint8 {
 			// Special case: Byteslices
 			byteslice := rv.Bytes()
 			WriteTo([]byte(Fmt("\"%X\"", byteslice)), w, n, err)
-			//WriteByteSlice(byteslice, w, n, err)
 		} else {
 			WriteTo([]byte("["), w, n, err)
 			// Write elems
@@ -818,7 +941,7 @@ func writeReflectJSON(rv reflect.Value, rt reflect.Type, w io.Writer, n *int64, 
 		WriteTo(jsonBytes, w, n, err)
 
 	default:
-		panic(Fmt("Unknown field type %v", rt.Kind()))
+		PanicSanity(Fmt("Unknown field type %v", rt.Kind()))
 	}
 
 }
