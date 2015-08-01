@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
 )
 
 var (
@@ -149,22 +149,6 @@ func addKeysFlags() {
 	nameCmd.PersistentFlags().BoolVarP(&RmKeyName, "rm", "", false, "removes a key's name")
 	nameCmd.PersistentFlags().BoolVarP(&LsNameAddr, "ls", "", false, "list all <name>:<address> pairs + un-named addresses")
 
-}
-
-func before(c *cli.Context) error {
-	var level int
-	if c.GlobalBool("debug") || c.Bool("debug") {
-		level = 2
-	}
-	log.SetLoggers(level, os.Stdout, os.Stderr)
-
-	logger.Debugf("UseDaemon: %v\n", UseDaemon)
-	return nil
-}
-
-func after(c *cli.Context) error {
-	log.Flush()
-	return nil
 }
 
 func checkMakeDataDir(dir string) error {
