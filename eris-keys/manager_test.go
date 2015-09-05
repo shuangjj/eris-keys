@@ -14,83 +14,98 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package manager
+package keys
 
 import (
-	"io/ioutil"
-	"os"
+	"encoding/hex"
+	//"os"
 	"testing"
 	"time"
 
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
-func TestTimedUnlock(t *testing.T) {
-	dir, ks := tmpKeyStore(t, crypto.NewKeyStorePlain)
-	defer os.RemoveAll(dir)
+var (
+	testSigData = "1223344556677889"
+	keyType     = "ed25519,ripemd160"
+)
 
-	am := NewManager(ks)
+func TestTimedUnlock(t *testing.T) {
+	_, ks := tmpKeyStore(t, crypto.NewKeyStorePassphrase)
+	//	defer os.RemoveAll(dir)
+
+	AccountManager = NewManager(ks)
+	am := AccountManager
 	pass := "foo"
-	a1, err := am.NewAccount(pass)
+	addr, err := coreKeygen(pass, keyType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	addrHex := hex.EncodeToString(addr)
 
 	// Signing without passphrase fails because account is locked
-	_, err = am.Sign(a1, testSigData)
+	_, err = coreSign(testSigData, addrHex)
 	if err != ErrLocked {
 		t.Fatal("Signing should've failed with ErrLocked before unlocking, got ", err)
 	}
 
 	// Signing with passphrase works
-	if err = am.TimedUnlock(a1.Address, pass, 100*time.Millisecond); err != nil {
+	if err = am.TimedUnlock(addr, pass, 100*time.Millisecond); err != nil {
 		t.Fatal(err)
 	}
 
 	// Signing without passphrase works because account is temp unlocked
-	_, err = am.Sign(a1, testSigData)
+	_, err = coreSign(testSigData, addrHex)
 	if err != nil {
 		t.Fatal("Signing shouldn't return an error after unlocking, got ", err)
 	}
 
 	// Signing fails again after automatic locking
 	time.Sleep(150 * time.Millisecond)
-	_, err = am.Sign(a1, testSigData)
+	_, err = coreSign(testSigData, addrHex)
 	if err != ErrLocked {
 		t.Fatal("Signing should've failed with ErrLocked timeout expired, got ", err)
 	}
 }
 
 func TestOverrideUnlock(t *testing.T) {
-	dir, ks := tmpKeyStore(t, crypto.NewKeyStorePlain)
-	defer os.RemoveAll(dir)
+	_, ks := tmpKeyStore(t, crypto.NewKeyStorePassphrase)
+	//defer os.RemoveAll(dir)
 
-	am := NewManager(ks)
+	AccountManager = NewManager(ks)
+	am := AccountManager
 	pass := "foo"
-	a1, err := am.NewAccount(pass)
+	addr, err := coreKeygen(pass, keyType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	addrHex := hex.EncodeToString(addr)
 
 	// Unlock indefinitely
-	if err = am.Unlock(a1.Address, pass); err != nil {
+	if err = am.Unlock(addr, pass); err != nil {
 		t.Fatal(err)
 	}
 
 	// Signing without passphrase works because account is temp unlocked
-	_, err = am.Sign(a1, testSigData)
+	_, err = coreSign(testSigData, addrHex)
 	if err != nil {
 		t.Fatal("Signing shouldn't return an error after unlocking, got ", err)
 	}
 
 	// reset unlock to a shorter period, invalidates the previous unlock
-	if err = am.TimedUnlock(a1.Address, pass, 100*time.Millisecond); err != nil {
+	if err = am.TimedUnlock(addr, pass, 100*time.Millisecond); err != nil {
 		t.Fatal(err)
 	}
 
 	// Signing without passphrase still works because account is temp unlocked
-	_, err = am.Sign(a1, testSigData)
+	_, err = coreSign(testSigData, addrHex)
 	if err != nil {
 		t.Fatal("Signing shouldn't return an error after unlocking, got ", err)
 	}
 
 	// Signing fails again after automatic locking
 	time.Sleep(150 * time.Millisecond)
-	_, err = am.Sign(a1, testSigData)
+	_, err = coreSign(testSigData, addrHex)
 	if err != ErrLocked {
 		t.Fatal("Signing should've failed with ErrLocked timeout expired, got ", err)
 	}
@@ -98,22 +113,23 @@ func TestOverrideUnlock(t *testing.T) {
 
 // This test should fail under -race if signing races the expiration goroutine.
 func TestSignRace(t *testing.T) {
-	dir, ks := tmpKeyStore(t, crypto.NewKeyStorePlain)
-	defer os.RemoveAll(dir)
+	_, ks := tmpKeyStore(t, crypto.NewKeyStorePassphrase)
+	//defer os.RemoveAll(dir)
 
 	// Create a test account.
 	am := NewManager(ks)
-	a1, err := am.NewAccount("")
+	pass := "foo"
+	addr, err := coreKeygen(pass, keyType)
 	if err != nil {
 		t.Fatal("could not create the test account", err)
 	}
 
-	if err := am.TimedUnlock(a1.Address, "", 15*time.Millisecond); err != nil {
-		t.Fatalf("could not unlock the test account", err)
+	if err := am.TimedUnlock(addr, pass, 15*time.Millisecond); err != nil {
+		t.Fatalf("could not unlock the test account: %v", err)
 	}
 	end := time.Now().Add(500 * time.Millisecond)
 	for time.Now().Before(end) {
-		if _, err := am.Sign(a1, testSigData); err == ErrLocked {
+		if _, err := coreSign(testSigData, hex.EncodeToString(addr)); err == ErrLocked {
 			return
 		} else if err != nil {
 			t.Errorf("Sign error: %v", err)
@@ -125,7 +141,7 @@ func TestSignRace(t *testing.T) {
 }
 
 func tmpKeyStore(t *testing.T, new func(string) crypto.KeyStore) (string, crypto.KeyStore) {
-	d, err := ioutil.TempDir("", "eth-keystore-test")
+	d, err := returnDataDir(KeysDir)
 	if err != nil {
 		t.Fatal(err)
 	}

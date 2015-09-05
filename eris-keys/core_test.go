@@ -1,30 +1,42 @@
-package commands
+package keys
 
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
 	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
 var (
-	DIR        = common.ScratchPath
 	AUTH       = ""
 	KEY_TYPES  = []string{"secp256k1,sha3", "ed25519,ripemd160", "secp256k1,ripemd160sha256"}
 	HASH_TYPES = []string{"sha256", "ripemd160"}
 )
 
+func init() {
+	// TODO: randomize and do setup/tear down for tests
+	KeysDir = common.ScratchPath
+	log.SetLoggers(0, os.Stdout, os.Stderr)
+}
+
+func dumpKey(k *crypto.Key) {
+	b, _ := k.MarshalJSON()
+	fmt.Println(string(b))
+}
+
 func testKeygenAndPub(t *testing.T, typ string) {
-	addr, err := coreKeygen(DIR, AUTH, typ)
+	addr, err := coreKeygen(AUTH, typ)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	pub, err := corePub(DIR, AUTH, toHex(addr))
+	pub, err := corePub(toHex(addr))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,19 +54,19 @@ func TestKeygenAndPub(t *testing.T) {
 }
 
 func testSignAndVerify(t *testing.T, typ string) {
-	addr, err := coreKeygen(DIR, AUTH, typ)
+	addr, err := coreKeygen(AUTH, typ)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	hash := crypto.Sha3([]byte("the hash of something!"))
 
-	sig, err := coreSign(DIR, AUTH, toHex(hash), toHex(addr))
+	sig, err := coreSign(toHex(hash), toHex(addr))
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	res, err := coreVerify(DIR, AUTH, toHex(addr), toHex(hash), toHex(sig))
+	res, err := coreVerify(AUTH, toHex(addr), toHex(hash), toHex(sig))
 	if err != nil {
 		t.Fatal(err)
 	}

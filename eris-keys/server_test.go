@@ -1,4 +1,4 @@
-package commands
+package keys
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 func init() {
 	failedCh := make(chan error)
 	go func() {
-		err := ListenAndServe(DefaultHost, TestPort)
+		err := StartServer(DefaultHost, TestPort)
 		failedCh <- err
 	}()
 	tick := time.NewTicker(time.Second)

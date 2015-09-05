@@ -1,4 +1,4 @@
-package commands
+package keys
 
 import (
 	"encoding/hex"
@@ -17,6 +17,13 @@ import (
 // the server process also maintains the unlocked accounts
 
 func StartServer(host, port string) error {
+	ks, err := newKeyStore(KeysDir, true)
+	if err != nil {
+		return err
+	}
+
+	AccountManager = NewManager(ks)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/gen", genHandler)
 	mux.HandleFunc("/pub", pubHandler)
@@ -34,12 +41,14 @@ func StartServer(host, port string) error {
 		port = os.Getenv("ERIS_KEYS_PORT")
 	}
 
+	logger.Infof("Starting eris-keys server on %s:%s\n", host, port)
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"}, // TODO: dev
 	})
 	return http.ListenAndServe(host+":"+port, c.Handler(mux))
 }
 
+// A request is just a map of args to be json marshalled
 type HTTPRequest map[string]string
 
 // dead simple response struct

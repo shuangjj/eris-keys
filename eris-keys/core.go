@@ -1,4 +1,4 @@
-package commands
+package keys
 
 import (
 	"crypto/sha256"
@@ -14,19 +14,29 @@ import (
 	"time"
 
 	"github.com/eris-ltd/eris-keys/crypto"
-	"github.com/eris-ltd/eris-keys/manager"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
 )
 
-var AccountManager *manager.Manager
+var ErrLocked = fmt.Errorf("account is locked")
+
+var AccountManager *Manager
 
 func GetKey(addr []byte) (*crypto.Key, error) {
+	// first check if the key is unlocked
 	k := AccountManager.GetKey(addr)
 	if k != nil {
+		logger.Debugln("Using unlocked key")
 		return k, nil
 	}
-	// TODO: check and inform user if key exists but isn't unlocked
+	logger.Debugln("key is not unlocked")
+	// now see if we can find an encrypted version on disk
+	isEncrypted, err := crypto.IsEncryptedKey(AccountManager.KeyStore(), addr)
+	if err == nil && isEncrypted {
+		return nil, ErrLocked
+	}
+
+	// else, it should be unencrypted on disk
 	keyStore, err := newKeyStore(KeysDir, false)
 	if err != nil {
 		return nil, err
@@ -143,6 +153,8 @@ func coreKeygen(auth, keyType string) ([]byte, error) {
 	var keyStore crypto.KeyStore
 	var err error
 
+	logger.Infof("Generating new key. Type (%s). Encrypted (%v)\n", keyType, auth != "")
+
 	if auth == "" {
 		keyStore, err = newKeyStore(KeysDir, false)
 		if err != nil {
@@ -161,6 +173,7 @@ func coreKeygen(auth, keyType string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error generating key %s %s", keyType, err)
 	}
+	logger.Infof("Generated new key. Address (%x). Type (%s). Encrypted (%v)\n", key.Address, key.Type, auth != "")
 	return key.Address, nil
 }
 
@@ -177,7 +190,7 @@ func coreSign(hash, addr string) ([]byte, error) {
 
 	key, err := GetKey(addrB)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving key for %x: %v", addrB, err)
+		return nil, err
 	}
 	sig, err := key.Sign(hashB)
 	if err != nil {
@@ -216,10 +229,9 @@ func corePub(addr string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("addr is invalid hex: %s", err.Error())
 	}
-
 	key, err := GetKey(addrB)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving key for %x: %v", addrB, err)
+		return nil, err
 	}
 	pub, err := key.Pubkey()
 	if err != nil {

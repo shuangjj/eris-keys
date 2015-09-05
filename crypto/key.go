@@ -261,6 +261,7 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	if err != nil {
 		return err
 	}
+	// TODO: remove this
 	if len(keyJSON.PrivateKey) == 0 {
 		return NoPrivateKeyErr("")
 	}
@@ -272,6 +273,7 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	if err != nil {
 		return err
 	}
+	k.PrivateKey = keyJSON.PrivateKey
 	k.Type, err = KeyTypeFromString(keyJSON.Type)
 	return err
 }

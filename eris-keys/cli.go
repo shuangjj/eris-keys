@@ -1,10 +1,8 @@
-package commands
+package keys
 
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/eris-ltd/eris-keys/manager"
 
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 
@@ -17,11 +15,6 @@ func ExitConnectErr(err error) {
 }
 
 func cliServer(cmd *cobra.Command, args []string) {
-	ks, err := newKeyStore(KeysDir, true)
-	IfExit(err)
-
-	AccountManager = manager.NewManager(ks)
-
 	IfExit(StartServer(KeyHost, KeyPort))
 }
 
@@ -36,7 +29,7 @@ func cliKeygen(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 func cliLock(cmd *cobra.Command, args []string) {
@@ -45,7 +38,7 @@ func cliLock(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 func cliUnlock(cmd *cobra.Command, args []string) {
@@ -55,7 +48,7 @@ func cliUnlock(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 // since pubs are not saved, the key needs to be unlocked to get the pub
@@ -66,7 +59,7 @@ func cliPub(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 func cliSign(cmd *cobra.Command, args []string) {
@@ -80,7 +73,7 @@ func cliSign(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 func cliVerify(cmd *cobra.Command, args []string) {
@@ -93,7 +86,7 @@ func cliVerify(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 func cliHash(cmd *cobra.Command, args []string) {
@@ -106,7 +99,7 @@ func cliHash(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 // TODO: password
@@ -120,7 +113,7 @@ func cliImport(cmd *cobra.Command, args []string) {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	fmt.Println(r)
+	logger.Println(r)
 }
 
 func cliName(cmd *cobra.Command, args []string) {
@@ -149,10 +142,10 @@ func cliName(cmd *cobra.Command, args []string) {
 		var names []string
 		IfExit(json.Unmarshal([]byte(r), &names))
 		for n, a := range names {
-			fmt.Printf("%s: %s\n", n, a)
+			logger.Printf("%s: %s\n", n, a)
 		}
 
 	} else {
-		fmt.Println(r)
+		logger.Println(r)
 	}
 }

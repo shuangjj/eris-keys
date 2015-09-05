@@ -14,23 +14,17 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
-package manager
+package keys
 
 // NOTE: this file is copied from github.com/ethereum/go-ethereum
 // and repurposed to suit the eris-keys daemon.
 // We really only wanted the TimeoutUnlock feature
 
 import (
-	"errors"
 	"sync"
 	"time"
 
 	"github.com/eris-ltd/eris-keys/crypto"
-)
-
-var (
-	ErrLocked = errors.New("account is locked")
-	ErrNoKeys = errors.New("no keys in store")
 )
 
 type Manager struct {
@@ -55,7 +49,10 @@ func (am *Manager) KeyStore() crypto.KeyStore {
 	return am.keyStore
 }
 
+// GetKey only returns unlocked keys
 func (am *Manager) GetKey(addr []byte) *crypto.Key {
+	am.mutex.Lock()
+	defer am.mutex.Unlock()
 	u, ok := am.unlocked[string(addr)]
 	if !ok {
 		return nil
@@ -90,6 +87,7 @@ func (am *Manager) TimedUnlock(addr []byte, keyAuth string, timeout time.Duratio
 			close(u.abort)
 		}
 	}
+	logger.Infof("Unlocking key %X for %v\n", addr, timeout)
 	if timeout > 0 {
 		u = &unlocked{Key: key, abort: make(chan struct{})}
 		go am.expire(addr, u, timeout)
@@ -108,6 +106,8 @@ func (am *Manager) expire(addr []byte, u *unlocked, timeout time.Duration) {
 		// just quit
 	case <-t.C:
 		am.mutex.Lock()
+
+		logger.Infof("Relocking %X\n", addr)
 		// only drop if it's still the same key instance that dropLater
 		// was launched with. we can check that using pointer equality
 		// because the map stores a new pointer every time the key is
