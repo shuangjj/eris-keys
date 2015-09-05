@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
 )
 
@@ -53,8 +54,10 @@ var EKeys = &cobra.Command{
 
 func Execute() {
 	buildKeysCommand()
+	EKeys.PersistentPostRun = after
 	EKeys.Execute()
 }
+
 func buildKeysCommand() {
 	EKeys.AddCommand(keygenCmd)
 	EKeys.AddCommand(lockCmd)
@@ -172,6 +175,8 @@ func addKeysFlags() {
 	//not sure if importCmd is correct. Check cliImport for more details
 	importCmd.PersistentFlags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "import a key")
 
+	verifyCmd.PersistentFlags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "key type")
+
 	nameCmd.PersistentFlags().BoolVarP(&RmKeyName, "rm", "", false, "removes a key's name")
 	nameCmd.PersistentFlags().BoolVarP(&LsNameAddr, "ls", "", false, "list all <name>:<address> pairs + un-named addresses")
 
@@ -186,4 +191,8 @@ func checkMakeDataDir(dir string) error {
 		}
 	}
 	return nil
+}
+
+func after(cmd *cobra.Command, args []string) {
+	log.Flush()
 }

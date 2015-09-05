@@ -150,12 +150,12 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, err)
 		return
 	}
-	hash := args["hash"]
-	if hash == "" {
-		WriteError(w, fmt.Errorf("must provide a message hash with the `hash` key"))
+	msg := args["msg"]
+	if msg == "" {
+		WriteError(w, fmt.Errorf("must provide a message to sign with the `msg` key"))
 		return
 	}
-	sig, err := coreSign(hash, addr)
+	sig, err := coreSign(msg, addr)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -169,13 +169,13 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, err)
 		return
 	}
-	pub, hash, sig := args["pub"], args["hash"], args["sig"]
+	pub, msg, sig := args["pub"], args["msg"], args["sig"]
 	if pub == "" {
 		WriteError(w, fmt.Errorf("must provide a pubkey with the `pub` key"))
 		return
 	}
-	if hash == "" {
-		WriteError(w, fmt.Errorf("must provide a message hash with the `hash` key"))
+	if msg == "" {
+		WriteError(w, fmt.Errorf("must provide a message msg with the `msg` key"))
 		return
 	}
 	if sig == "" {
@@ -183,7 +183,7 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := coreVerify(typ, pub, hash, sig)
+	res, err := coreVerify(typ, pub, msg, sig)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -282,6 +282,7 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, err)
 			return
 		}
+		WriteResult(w, fmt.Sprintf("Added name (%s) to address (%s)", name, addr))
 	}
 }
 

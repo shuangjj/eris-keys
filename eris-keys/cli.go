@@ -77,11 +77,11 @@ func cliSign(cmd *cobra.Command, args []string) {
 }
 
 func cliVerify(cmd *cobra.Command, args []string) {
-	if len(args) != 2 {
-		Exit(fmt.Errorf("enter a msg/hash and a signature"))
+	if len(args) != 3 {
+		Exit(fmt.Errorf("enter a msg/hash, a signature, and a public key"))
 	}
-	msg, sig := args[0], args[1]
-	r, err := Call("verify", map[string]string{"addr": KeyAddr, "name": KeyName, "msg": msg, "sig": sig})
+	msg, sig, pub := args[0], args[1], args[2]
+	r, err := Call("verify", map[string]string{"type": KeyType, "pub": pub, "msg": msg, "sig": sig})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
 	}
@@ -94,7 +94,7 @@ func cliHash(cmd *cobra.Command, args []string) {
 		Exit(fmt.Errorf("enter something to hash"))
 	}
 	msg := args[0]
-	r, err := Call("hash", map[string]string{"type": KeyType, "msg": msg, "hex": fmt.Sprintf("%v", HexByte)})
+	r, err := Call("hash", map[string]string{"type": HashType, "msg": msg, "hex": fmt.Sprintf("%v", HexByte)})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
 	}
@@ -139,8 +139,8 @@ func cliName(cmd *cobra.Command, args []string) {
 	}
 	IfExit(err)
 	if ls {
-		var names []string
-		IfExit(json.Unmarshal([]byte(r), &names))
+		names := make(map[string]string)
+		IfExit(json.Unmarshal([]byte(r), names))
 		for n, a := range names {
 			logger.Printf("%s: %s\n", n, a)
 		}
