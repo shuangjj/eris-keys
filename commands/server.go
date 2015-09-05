@@ -13,11 +13,10 @@ import (
 )
 
 //------------------------------------------------------------------------
-// http server exports same commands as the cli
-// all request arguments are keyed and passed through header
-// body is ignored
+// all cli commands pass through the http server
+// the server process also maintains the unlocked accounts
 
-func ListenAndServe(host, port string) error {
+func StartServer(host, port string) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/gen", genHandler)
 	mux.HandleFunc("/pub", pubHandler)
@@ -26,6 +25,8 @@ func ListenAndServe(host, port string) error {
 	mux.HandleFunc("/hash", hashHandler)
 	mux.HandleFunc("/import", importHandler)
 	mux.HandleFunc("/name", nameHandler)
+	mux.HandleFunc("/unlock", unlockHandler)
+	mux.HandleFunc("/lock", lockHandler)
 	if os.Getenv("ERIS_KEYS_HOST") != "" {
 		host = os.Getenv("ERIS_KEYS_HOST")
 	}
@@ -63,20 +64,20 @@ func WriteError(w http.ResponseWriter, err error) {
 // handlers
 
 func genHandler(w http.ResponseWriter, r *http.Request) {
-	typ, dir, auth, args, err := typeDirAuthArgs(r)
+	typ, auth, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 
 	name := args["name"]
-	addr, err := coreKeygen(dir, auth, typ)
+	addr, err := coreKeygen(auth, typ)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 	if name != "" {
-		err := coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr)))
+		err := coreNameAdd(name, strings.ToUpper(hex.EncodeToString(addr)))
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -85,19 +86,42 @@ func genHandler(w http.ResponseWriter, r *http.Request) {
 	WriteResult(w, fmt.Sprintf("%X", addr))
 }
 
+func unlockHandler(w http.ResponseWriter, r *http.Request) {
+	_, auth, args, err := typeAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	addr, name, timeout := args["addr"], args["name"], args["timeout"]
+	addr, err = getNameAddr(name, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if err := coreUnlock(auth, addr, timeout); err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteResult(w, fmt.Sprintf("%s unlocked", addr))
+}
+
+func lockHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO
+}
+
 func pubHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth, args, err := typeDirAuthArgs(r)
+	_, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 	addr, name := args["addr"], args["name"]
-	addr, err = getNameAddr(dir, name, addr)
+	addr, err = getNameAddr(name, addr)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	pub, err := corePub(dir, auth, addr)
+	pub, err := corePub(addr)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -106,13 +130,13 @@ func pubHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func signHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth, args, err := typeDirAuthArgs(r)
+	_, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 	addr, name := args["addr"], args["name"]
-	addr, err = getNameAddr(dir, name, addr)
+	addr, err = getNameAddr(name, addr)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -122,7 +146,7 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, fmt.Errorf("must provide a message hash with the `hash` key"))
 		return
 	}
-	sig, err := coreSign(dir, auth, hash, addr)
+	sig, err := coreSign(hash, addr)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -131,13 +155,13 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyHandler(w http.ResponseWriter, r *http.Request) {
-	_, dir, auth, args, err := typeDirAuthArgs(r)
+	_, auth, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 	addr, name := args["addr"], args["name"]
-	addr, err = getNameAddr(dir, name, addr)
+	addr, err = getNameAddr(name, addr)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -153,7 +177,7 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := coreVerify(dir, auth, addr, hash, sig)
+	res, err := coreVerify(auth, addr, hash, sig)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -162,7 +186,7 @@ func verifyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func hashHandler(w http.ResponseWriter, r *http.Request) {
-	typ, _, _, args, err := typeDirAuthArgs(r)
+	typ, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -179,7 +203,7 @@ func hashHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func importHandler(w http.ResponseWriter, r *http.Request) {
-	typ, dir, auth, args, err := typeDirAuthArgs(r)
+	typ, auth, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
@@ -187,14 +211,14 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 	name := args["data"]
 	key := args["key"]
 
-	addr, err := coreImport(dir, auth, typ, key)
+	addr, err := coreImport(auth, typ, key)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
 
 	if name != "" {
-		if err := coreNameAdd(dir, name, strings.ToUpper(hex.EncodeToString(addr))); err != nil {
+		if err := coreNameAdd(name, strings.ToUpper(hex.EncodeToString(addr))); err != nil {
 			WriteError(w, err)
 			return
 		}
@@ -204,17 +228,16 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 
 func nameHandler(w http.ResponseWriter, r *http.Request) {
 	action := r.URL.Path[len("name"):]
-	_, _, _, args, err := typeDirAuthArgs(r)
+	_, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	dir := args["dir"]
 	name := args["name"]
 	addr := args["addr"]
 
 	if action == "ls" {
-		names, err := coreNameList(dir)
+		names, err := coreNameList()
 		if err != nil {
 			WriteError(w, err)
 			return
@@ -235,33 +258,29 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if action == "rm" {
-		if err := coreNameRm(dir, name); err != nil {
+		if err := coreNameRm(name); err != nil {
 			WriteError(w, err)
 			return
 		}
 	}
 
 	if addr == "" {
-		addr, err := coreNameGet(dir, name)
+		addr, err := coreNameGet(name)
 		if err != nil {
 			WriteError(w, err)
 			return
 		}
 		WriteResult(w, addr)
 	} else {
-		if err := coreNameAdd(dir, name, strings.ToUpper(addr)); err != nil {
+		if err := coreNameAdd(name, strings.ToUpper(addr)); err != nil {
 			WriteError(w, err)
 			return
 		}
 	}
 }
 
-func typeDirAuth(r *http.Request) (string, string, string) {
-	return DefaultKeyType, DefaultDir, DefaultAuth
-}
-
 // convenience function
-func typeDirAuthArgs(r *http.Request) (typ string, dir string, auth string, args map[string]string, err error) {
+func typeAuthArgs(r *http.Request) (typ string, auth string, args map[string]string, err error) {
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -279,14 +298,9 @@ func typeDirAuthArgs(r *http.Request) (typ string, dir string, auth string, args
 		typ = DefaultKeyType
 	}
 
-	dir = args["dir"]
-	if dir == "" {
-		dir = DefaultDir
-	}
-
 	auth = args["auth"]
 	if auth == "" {
-		auth = DefaultAuth
+		auth = "" //DefaultAuth
 	}
 
 	return

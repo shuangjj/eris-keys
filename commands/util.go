@@ -9,17 +9,31 @@ import (
 	"strings"
 
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/howeyc/gopass"
 )
 
+//------------------------------------------------------------
+// auth
+
+func hiddenAuth() string {
+	fmt.Printf("Enter Password:")
+	pwd := gopass.GetPasswdMasked()
+	return string(pwd)
+}
+
+//------------------------------------------------------------
+// key names
+
 // most commands require at least one of --name or --addr
-func checkGetNameAddr(dir, name, addr string) string {
-	addr, err := getNameAddr(dir, name, addr)
+func checkGetNameAddr(name, addr string) string {
+	addr, err := getNameAddr(name, addr)
 	IfExit(err)
 	return addr
 }
 
 // return addr from name or addr
-func getNameAddr(dir, name, addr string) (string, error) {
+func getNameAddr(name, addr string) (string, error) {
 	if name == "" && addr == "" {
 		return "", fmt.Errorf("at least one of --name or --addr must be provided")
 	}
@@ -27,7 +41,7 @@ func getNameAddr(dir, name, addr string) (string, error) {
 	// name takes precedent if both are given
 	var err error
 	if name != "" {
-		addr, err = coreNameGet(dir, name)
+		addr, err = coreNameGet(name)
 		if err != nil {
 			return "", err
 		}
@@ -43,22 +57,26 @@ func unpackResponse(resp *http.Response) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	resp.Body.Close()
 	r := new(HTTPResponse)
 	if err := json.Unmarshal(b, r); err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("Error unmarshaling response: %v", err)
 	}
 	return r.Response, r.Error, nil
 }
 
-type ErrConnectionRefused error
+type ErrConnectionRefused string
+
+func (e ErrConnectionRefused) Error() string {
+	return string(e)
+}
 
 func requestResponse(req *http.Request) (string, string, error) {
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", "", ErrConnectionRefused(err)
+		return "", "", ErrConnectionRefused(err.Error())
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		return "", "", fmt.Errorf(resp.Status)
 	}
@@ -70,7 +88,7 @@ func Call(method string, args map[string]string) (string, error) {
 	url := fmt.Sprintf("%s/%s", DaemonAddr, method)
 	b, err := json.Marshal(args)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error marshaling args map: %v", err)
 	}
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r, errS, err := requestResponse(req)

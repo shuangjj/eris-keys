@@ -10,11 +10,29 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
+	"strconv"
+	"time"
+
+	"github.com/eris-ltd/eris-keys/crypto"
+	"github.com/eris-ltd/eris-keys/manager"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
-	"github.com/eris-ltd/eris-keys/crypto"
 )
+
+var AccountManager *manager.Manager
+
+func GetKey(addr []byte) (*crypto.Key, error) {
+	k := AccountManager.GetKey(addr)
+	if k != nil {
+		return k, nil
+	}
+	// TODO: check and inform user if key exists but isn't unlocked
+	keyStore, err := newKeyStore(KeysDir, false)
+	if err != nil {
+		return nil, err
+	}
+	return keyStore.GetKey(addr, "")
+}
 
 //-----
 
@@ -40,88 +58,98 @@ func returnNamesDir(dir string) (string, error) {
 
 // TODO: overwrite all mem buffers/registers?
 
-func newKeyStore(dir, auth string) (keyStore crypto.KeyStore, err error) {
+func newKeyStore(dir string, auth bool) (keyStore crypto.KeyStore, err error) {
 	dir, err = returnDataDir(dir)
 	if err != nil {
 		return nil, err
 	}
-	if auth != "" {
+	if auth {
 		keyStore = crypto.NewKeyStorePassphrase(dir)
 	} else {
 		keyStore = crypto.NewKeyStorePlain(dir)
-
 	}
 	return
 }
 
 //----------------------------------------------------------------
 
-func coreImport(dir, auth, keyType, keyHex string) ([]byte, error) {
-	keyStore, err := newKeyStore(dir, auth)
-	if err != nil {
-		return nil, err
-	}
-
-	// if the keyHex is actually json, make sure
-	// its a valid key, write to file
-	if len(keyHex) > 0 && keyHex[:1] == "{" {
-		keyJson := []byte(keyHex)
-		if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
-			dir, err = returnDataDir(dir)
-			if err != nil {
-				return nil, err
-			}
-			if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
-				return nil, err
-			}
-			return addr, nil
-		} else {
-			return nil, fmt.Errorf("invalid json key passed on command line")
+// TODO: ...
+func coreImport(auth, keyType, keyHex string) ([]byte, error) {
+	return nil, nil
+	/*
+		keyStore, err := newKeyStore(dir, auth)
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	if _, err := os.Stat(keyHex); err == nil {
-		keyJson, _ := ioutil.ReadFile(keyHex)
-		if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
-			dir, err = returnDataDir(dir)
-			if err != nil {
-				return nil, err
+		// if the keyHex is actually json, make sure
+		// its a valid key, write to file
+		if len(keyHex) > 0 && keyHex[:1] == "{" {
+			keyJson := []byte(keyHex)
+			if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
+				dir, err = returnDataDir(dir)
+				if err != nil {
+					return nil, err
+				}
+				if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
+					return nil, err
+				}
+				return addr, nil
+			} else {
+				return nil, fmt.Errorf("invalid json key passed on command line")
 			}
-			if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
-				return nil, err
-			}
-			return addr, nil
-		} else {
-			return nil, fmt.Errorf("file was not a valid json key")
 		}
-	}
 
-	keyBytes, err := hex.DecodeString(keyHex)
-	if err != nil {
-		return nil, fmt.Errorf("private key is not a valid json key or known file, or is invalid hex: %v", err)
-	}
+		if _, err := os.Stat(keyHex); err == nil {
+			keyJson, _ := ioutil.ReadFile(keyHex)
+			if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
+				dir, err = returnDataDir(dir)
+				if err != nil {
+					return nil, err
+				}
+				if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
+					return nil, err
+				}
+				return addr, nil
+			} else {
+				return nil, fmt.Errorf("file was not a valid json key")
+			}
+		}
 
-	keyT, err := crypto.KeyTypeFromString(keyType)
-	if err != nil {
-		return nil, err
-	}
-	key, err := crypto.NewKeyFromPriv(keyT, keyBytes)
-	if err != nil {
-		return nil, err
-	}
+		keyBytes, err := hex.DecodeString(keyHex)
+		if err != nil {
+			return nil, fmt.Errorf("private key is not a valid json key or known file, or is invalid hex: %v", err)
+		}
 
-	// store the new key
-	if err = keyStore.StoreKey(key, auth); err != nil {
-		return nil, err
-	}
+		keyT, err := crypto.KeyTypeFromString(keyType)
+		if err != nil {
+			return nil, err
+		}
+		key, err := crypto.NewKeyFromPriv(keyT, keyBytes)
+		if err != nil {
+			return nil, err
+		}
 
-	return key.Address, nil
+		// store the new key
+		if err = keyStore.StoreKey(key, auth); err != nil {
+			return nil, err
+		}
+
+		return key.Address, nil
+	*/
 }
 
-func coreKeygen(dir, auth, keyType string) ([]byte, error) {
-	keyStore, err := newKeyStore(dir, auth)
-	if err != nil {
-		return nil, err
+func coreKeygen(auth, keyType string) ([]byte, error) {
+	var keyStore crypto.KeyStore
+	var err error
+
+	if auth == "" {
+		keyStore, err = newKeyStore(KeysDir, false)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		keyStore = AccountManager.KeyStore()
 	}
 
 	var key *crypto.Key
@@ -136,7 +164,7 @@ func coreKeygen(dir, auth, keyType string) ([]byte, error) {
 	return key.Address, nil
 }
 
-func coreSign(dir, auth, hash, addr string) ([]byte, error) {
+func coreSign(hash, addr string) ([]byte, error) {
 
 	hashB, err := hex.DecodeString(hash)
 	if err != nil {
@@ -146,12 +174,8 @@ func coreSign(dir, auth, hash, addr string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("addr is invalid hex: %s", err.Error())
 	}
-	keyStore, err := newKeyStore(dir, auth)
-	if err != nil {
-		return nil, err
-	}
 
-	key, err := keyStore.GetKey(addrB, auth)
+	key, err := GetKey(addrB)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving key for %x: %v", addrB, err)
 	}
@@ -162,7 +186,7 @@ func coreSign(dir, auth, hash, addr string) ([]byte, error) {
 	return sig, nil
 }
 
-func coreVerify(dir, auth, addr, hash, sig string) (result bool, err error) {
+func coreVerify(auth, addr, hash, sig string) (result bool, err error) {
 	hashB, err := hex.DecodeString(hash)
 	if err != nil {
 		return result, fmt.Errorf("hash is invalid hex: %s", err.Error())
@@ -175,15 +199,9 @@ func coreVerify(dir, auth, addr, hash, sig string) (result bool, err error) {
 	if err != nil {
 		return result, fmt.Errorf("sig is invalid hex: %s", err.Error())
 	}
-	keyStore, err := newKeyStore(dir, auth)
-	if err != nil {
-		return result, fmt.Errorf("error opening keyStore %s", err.Error())
-	}
 
-	key, err := keyStore.GetKey(addrB, auth)
-	if err != nil {
-		return result, fmt.Errorf("error retrieving key for %x: %v", addrB, err)
-	}
+	// TODO: verify shouldnt require key
+	key, err := GetKey(addrB)
 
 	result, err = key.Verify(hashB, sigB)
 	if err != nil {
@@ -193,18 +211,13 @@ func coreVerify(dir, auth, addr, hash, sig string) (result bool, err error) {
 	return
 }
 
-func corePub(dir, auth, addr string) ([]byte, error) {
+func corePub(addr string) ([]byte, error) {
 	addrB, err := hex.DecodeString(addr)
 	if err != nil {
 		return nil, fmt.Errorf("addr is invalid hex: %s", err.Error())
 	}
 
-	keyStore, err := newKeyStore(dir, auth)
-	if err != nil {
-		return nil, fmt.Errorf("error opening keyStore %s", err.Error())
-	}
-
-	key, err := keyStore.GetKey(addrB, auth)
+	key, err := GetKey(addrB)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving key for %x: %v", addrB, err)
 	}
@@ -213,6 +226,31 @@ func corePub(dir, auth, addr string) ([]byte, error) {
 		return nil, fmt.Errorf("error retrieving pub key for %x: %v", addrB, err)
 	}
 	return pub, nil
+}
+
+func coreUnlock(auth, addr, timeout string) error {
+	addrB, err := hex.DecodeString(addr)
+	if err != nil {
+		return fmt.Errorf("addr is invalid hex: %s", err.Error())
+	}
+
+	if _, err := GetKey(addrB); err == nil {
+		return fmt.Errorf("Key is already unlocked or was never encrypted")
+	}
+
+	var timeoutD time.Duration
+	if timeout != "" {
+		t, err := strconv.ParseInt(timeout, 0, 64)
+		if err != nil {
+			return err
+		}
+		timeoutD = time.Duration(t)
+	}
+
+	if err := AccountManager.TimedUnlock(addrB, auth, timeoutD*time.Minute); err != nil {
+		return err
+	}
+	return nil
 }
 
 func coreHash(typ, data string, hexD bool) ([]byte, error) {
@@ -241,16 +279,16 @@ func coreHash(typ, data string, hexD bool) ([]byte, error) {
 //----------------------------------------------------------------
 // manage names for keys
 
-func coreNameAdd(dir, name, addr string) error {
-	dir, err := returnNamesDir(dir)
+func coreNameAdd(name, addr string) error {
+	dir, err := returnNamesDir(KeysDir)
 	if err != nil {
 		return err
 	}
 	return ioutil.WriteFile(path.Join(dir, name), []byte(addr), 0600)
 }
 
-func coreNameList(dir string) (map[string]string, error) {
-	dir, err := returnNamesDir(dir)
+func coreNameList() (map[string]string, error) {
+	dir, err := returnNamesDir(KeysDir)
 	if err != nil {
 		return nil, err
 	}
@@ -269,8 +307,8 @@ func coreNameList(dir string) (map[string]string, error) {
 	return names, nil
 }
 
-func coreAddrList(dir string) (map[int]string, error) {
-	dir, err := returnDataDir(dir)
+func coreAddrList() (map[int]string, error) {
+	dir, err := returnDataDir(KeysDir)
 	if err != nil {
 		return nil, err
 	}
@@ -285,16 +323,16 @@ func coreAddrList(dir string) (map[int]string, error) {
 	return addrs, nil
 }
 
-func coreNameRm(dir, name string) error {
-	dir, err := returnNamesDir(dir)
+func coreNameRm(name string) error {
+	dir, err := returnNamesDir(KeysDir)
 	if err != nil {
 		return err
 	}
 	return os.Remove(path.Join(dir, name))
 }
 
-func coreNameGet(dir, name string) (string, error) {
-	dir, err := returnNamesDir(dir)
+func coreNameGet(name string) (string, error) {
+	dir, err := returnNamesDir(KeysDir)
 	if err != nil {
 		return "", err
 	}

@@ -10,7 +10,6 @@ import (
 var (
 	DefaultKeyType  = "ed25519,ripemd160"
 	DefaultDir      = common.KeysPath
-	DefaultAuth     = ""
 	DefaultHashType = "sha256"
 
 	DefaultHost = "localhost"
@@ -20,23 +19,29 @@ var (
 	TestAddr    = "http://" + DefaultHost + ":" + TestPort
 
 	DaemonAddr = DefaultAddr
-	UseDaemon  = true
-	//flag vars
+
+	/* flag vars */
 	//global
-	KeysDir = ""
-	KeyAuth = ""
-	KeyName = ""
-	KeyAddr = ""
-	KeyHost = ""
-	KeyPort = ""
+	KeysDir string
+	KeyName string
+	KeyAddr string
+	KeyHost string
+	KeyPort string
+
 	//keygenCmd only
-	KeyType = ""
+	NoPassword bool
+	KeyType    string
+
 	//hashCmd only
-	HashType = ""
-	HexByte  = false
+	HashType string
+	HexByte  bool
+
 	//nameCmd only
-	RmKeyName  = false
-	LsNameAddr = false
+	RmKeyName  bool
+	LsNameAddr bool
+
+	// lockCmd only
+	UnlockTime int // minutes
 )
 
 var EKeys = &cobra.Command{
@@ -52,6 +57,8 @@ func Execute() {
 }
 func buildKeysCommand() {
 	EKeys.AddCommand(keygenCmd)
+	EKeys.AddCommand(lockCmd)
+	EKeys.AddCommand(unlockCmd)
 	EKeys.AddCommand(nameCmd)
 	EKeys.AddCommand(signCmd)
 	EKeys.AddCommand(pubKeyCmd)
@@ -68,6 +75,24 @@ var keygenCmd = &cobra.Command{
 	Long:  "Generates a key using (insert crypto pkgs used)",
 	Run: func(cmd *cobra.Command, args []string) {
 		cliKeygen(cmd, args)
+	},
+}
+
+var lockCmd = &cobra.Command{
+	Use:   "lock",
+	Short: "lock a key",
+	Long:  "lock an unlocked key by re-encrypting it",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliLock(cmd, args)
+	},
+}
+
+var unlockCmd = &cobra.Command{
+	Use:   "unlock",
+	Short: "unlock a key",
+	Long:  "unlock an unlocked key by supplying the password",
+	Run: func(cmd *cobra.Command, args []string) {
+		cliUnlock(cmd, args)
 	},
 }
 
@@ -133,13 +158,14 @@ var importCmd = &cobra.Command{
 
 func addKeysFlags() {
 	EKeys.PersistentFlags().StringVarP(&KeysDir, "dir", "", DefaultDir, "specify the location of the directory containing key files")
-	EKeys.PersistentFlags().StringVarP(&KeyAuth, "auth", "", DefaultAuth, "a password to be used for encrypting keys")
 	EKeys.PersistentFlags().StringVarP(&KeyName, "name", "", "", "name of key to use")
 	EKeys.PersistentFlags().StringVarP(&KeyAddr, "addr", "", "", "address of key to use")
 	EKeys.PersistentFlags().StringVarP(&KeyHost, "host", "", DefaultHost, "set the host for key daemon to listen on")
 	EKeys.PersistentFlags().StringVarP(&KeyPort, "port", "", DefaultPort, "set the host for key daemon to listen on")
 
 	keygenCmd.Flags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "specify the type of key to create. Supports 'secp256k1,sha3' (ethereum),  'secp256k1,ripemd160sha2' (bitcoin), 'ed25519,ripemd160' (tendermint)")
+	keygenCmd.Flags().BoolVarP(&NoPassword, "no-pass", "", false, "don't use a password for this key")
+
 	hashCmd.PersistentFlags().StringVarP(&HashType, "type", "t", DefaultHashType, "specify the hash function to use")
 	hashCmd.PersistentFlags().BoolVarP(&HexByte, "hex", "", false, "the input should be hex decoded to bytes first")
 
@@ -149,6 +175,7 @@ func addKeysFlags() {
 	nameCmd.PersistentFlags().BoolVarP(&RmKeyName, "rm", "", false, "removes a key's name")
 	nameCmd.PersistentFlags().BoolVarP(&LsNameAddr, "ls", "", false, "list all <name>:<address> pairs + un-named addresses")
 
+	unlockCmd.PersistentFlags().IntVarP(&UnlockTime, "time", "t", 10, "number of minutes to unlock key for. defaults to 10, 0 for forever")
 }
 
 func checkMakeDataDir(dir string) error {

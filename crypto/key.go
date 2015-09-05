@@ -44,6 +44,12 @@ func (err InvalidCurveErr) Error() string {
 	return fmt.Sprintf("invalid curve type %v", err)
 }
 
+type NoPrivateKeyErr string
+
+func (err NoPrivateKeyErr) Error() string {
+	return fmt.Sprintf("Private key is not available or is encrypted")
+}
+
 type KeyType struct {
 	CurveType CurveType
 	AddrType  AddrType
@@ -255,6 +261,9 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	if err != nil {
 		return err
 	}
+	if len(keyJSON.PrivateKey) == 0 {
+		return NoPrivateKeyErr("")
+	}
 
 	u := new(uuid.UUID)
 	*u = keyJSON.Id
@@ -263,7 +272,6 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	k.PrivateKey = keyJSON.PrivateKey
 	k.Type, err = KeyTypeFromString(keyJSON.Type)
 	return err
 }
