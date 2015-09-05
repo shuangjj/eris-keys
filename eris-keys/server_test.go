@@ -68,6 +68,11 @@ func testServerSignAndVerify(t *testing.T, typ string) {
 	addr, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
+	body1 = formatForBody(map[string]string{"type": typ, "addr": addr})
+	req, _ = http.NewRequest("POST", TestAddr+"/pub", body1)
+	pub, errS, err := requestResponse(req)
+	checkErrs(t, errS, err)
+
 	hash := crypto.Sha3([]byte("the hash of something!"))
 
 	body2 := formatForBody(map[string]string{"hash": toHex(hash), "addr": addr})
@@ -75,7 +80,7 @@ func testServerSignAndVerify(t *testing.T, typ string) {
 	sig, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
-	body3 := formatForBody(map[string]string{"hash": toHex(hash), "addr": addr, "sig": sig})
+	body3 := formatForBody(map[string]string{"type": typ, "hash": toHex(hash), "pub": pub, "sig": sig})
 	req, _ = http.NewRequest("POST", TestAddr+"/verify", body3)
 	res, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)

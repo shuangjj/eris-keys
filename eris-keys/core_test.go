@@ -2,6 +2,7 @@ package keys
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"testing"
@@ -59,6 +60,11 @@ func testSignAndVerify(t *testing.T, typ string) {
 		t.Fatal(err)
 	}
 
+	pub, err := corePub(hex.EncodeToString(addr))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	hash := crypto.Sha3([]byte("the hash of something!"))
 
 	sig, err := coreSign(toHex(hash), toHex(addr))
@@ -66,7 +72,7 @@ func testSignAndVerify(t *testing.T, typ string) {
 		t.Fatal(err)
 	}
 
-	res, err := coreVerify(AUTH, toHex(addr), toHex(hash), toHex(sig))
+	res, err := coreVerify(typ, toHex(pub), toHex(hash), toHex(sig))
 	if err != nil {
 		t.Fatal(err)
 	}

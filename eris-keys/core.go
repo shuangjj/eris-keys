@@ -199,12 +199,16 @@ func coreSign(hash, addr string) ([]byte, error) {
 	return sig, nil
 }
 
-func coreVerify(auth, addr, hash, sig string) (result bool, err error) {
+func coreVerify(typ, pub, hash, sig string) (result bool, err error) {
+	keyT, err := crypto.KeyTypeFromString(typ)
+	if err != nil {
+		return result, err
+	}
 	hashB, err := hex.DecodeString(hash)
 	if err != nil {
 		return result, fmt.Errorf("hash is invalid hex: %s", err.Error())
 	}
-	addrB, err := hex.DecodeString(addr)
+	pubB, err := hex.DecodeString(pub)
 	if err != nil {
 		return result, fmt.Errorf("addr is invalid hex: %s", err.Error())
 	}
@@ -213,12 +217,9 @@ func coreVerify(auth, addr, hash, sig string) (result bool, err error) {
 		return result, fmt.Errorf("sig is invalid hex: %s", err.Error())
 	}
 
-	// TODO: verify shouldnt require key
-	key, err := GetKey(addrB)
-
-	result, err = key.Verify(hashB, sigB)
+	result, err = crypto.Verify(keyT.CurveType, hashB, sigB, pubB)
 	if err != nil {
-		return result, fmt.Errorf("error verifying signature %x for address %x: %v", sigB, addrB, err)
+		return result, fmt.Errorf("error verifying signature %x for pubkey %x: %v", sigB, pubB, err)
 	}
 
 	return

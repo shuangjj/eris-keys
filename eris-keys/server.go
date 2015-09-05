@@ -164,29 +164,26 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func verifyHandler(w http.ResponseWriter, r *http.Request) {
-	_, auth, args, err := typeAuthArgs(r)
+	typ, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	addr, name := args["addr"], args["name"]
-	addr, err = getNameAddr(name, addr)
-	if err != nil {
-		WriteError(w, err)
+	pub, hash, sig := args["pub"], args["hash"], args["sig"]
+	if pub == "" {
+		WriteError(w, fmt.Errorf("must provide a pubkey with the `pub` key"))
 		return
 	}
-	hash := args["hash"]
 	if hash == "" {
 		WriteError(w, fmt.Errorf("must provide a message hash with the `hash` key"))
 		return
 	}
-	sig := args["sig"]
 	if sig == "" {
 		WriteError(w, fmt.Errorf("must provide a signature with the `sig` key"))
 		return
 	}
 
-	res, err := coreVerify(auth, addr, hash, sig)
+	res, err := coreVerify(typ, pub, hash, sig)
 	if err != nil {
 		WriteError(w, err)
 		return

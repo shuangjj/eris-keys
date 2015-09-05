@@ -209,14 +209,14 @@ func (k *Key) Pubkey() ([]byte, error) {
 	return nil, InvalidCurveErr(k.Type.CurveType)
 }
 
-func (k *Key) Verify(hash, sig []byte) (bool, error) {
-	switch k.Type.CurveType {
+func Verify(curveType CurveType, hash, sig, pub []byte) (bool, error) {
+	switch curveType {
 	case CurveTypeSecp256k1:
-		return verifySigSecp256k1(k, hash, sig)
+		return verifySigSecp256k1(hash, sig, pub)
 	case CurveTypeEd25519:
-		return verifySigEd25519(k, hash, sig)
+		return verifySigEd25519(hash, sig, pub)
 	}
-	return false, InvalidCurveErr(k.Type.CurveType)
+	return false, InvalidCurveErr(curveType)
 }
 
 //-----------------------------------------------------------------------------
@@ -368,13 +368,8 @@ func signEd25519(k *Key, hash []byte) ([]byte, error) {
 	return sigB[:], nil
 }
 
-func verifySigSecp256k1(k *Key, hash, sig []byte) (bool, error) {
+func verifySigSecp256k1(hash, sig, pubOG []byte) (bool, error) {
 	pub, err := secp256k1.RecoverPubkey(hash, sig)
-	if err != nil {
-		return false, err
-	}
-
-	pubOG, err := k.Pubkey()
 	if err != nil {
 		return false, err
 	}
@@ -388,11 +383,7 @@ func verifySigSecp256k1(k *Key, hash, sig []byte) (bool, error) {
 	return true, nil
 }
 
-func verifySigEd25519(k *Key, hash, sig []byte) (bool, error) {
-	pub, err := k.Pubkey()
-	if err != nil {
-		return false, err
-	}
+func verifySigEd25519(hash, sig, pub []byte) (bool, error) {
 	pubKeyBytes := new([32]byte)
 	copy(pubKeyBytes[:], pub)
 	sigBytes := new([64]byte)
