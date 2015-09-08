@@ -90,6 +90,7 @@ func Call(method string, args map[string]string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Error marshaling args map: %v", err)
 	}
+	logger.Debugln("calling", url)
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(b))
 	r, errS, err := requestResponse(req)
 	if err != nil {

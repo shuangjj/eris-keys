@@ -293,11 +293,18 @@ func coreHash(typ, data string, hexD bool) ([]byte, error) {
 // manage names for keys
 
 func coreNameAdd(name, addr string) error {
-	dir, err := returnNamesDir(KeysDir)
+	namesDir, err := returnNamesDir(KeysDir)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path.Join(dir, name), []byte(addr), 0600)
+	keysDir, err := returnDataDir(KeysDir)
+	if err != nil {
+		return err
+	}
+	if _, err := os.Stat(path.Join(keysDir, addr)); err != nil {
+		return fmt.Errorf("Unknown key %s", addr)
+	}
+	return ioutil.WriteFile(path.Join(namesDir, name), []byte(addr), 0600)
 }
 
 func coreNameList() (map[string]string, error) {

@@ -32,6 +32,8 @@ func StartServer(host, port string) error {
 	mux.HandleFunc("/hash", hashHandler)
 	mux.HandleFunc("/import", importHandler)
 	mux.HandleFunc("/name", nameHandler)
+	mux.HandleFunc("/name/ls", nameLsHandler)
+	mux.HandleFunc("/name/rm", nameRmHandler)
 	mux.HandleFunc("/unlock", unlockHandler)
 	mux.HandleFunc("/lock", lockHandler)
 	if os.Getenv("ERIS_KEYS_HOST") != "" {
@@ -214,8 +216,7 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, err)
 		return
 	}
-	name := args["data"]
-	key := args["key"]
+	name, key := args["data"], args["key"]
 
 	addr, err := coreImport(auth, typ, key)
 	if err != nil {
@@ -233,41 +234,18 @@ func importHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func nameHandler(w http.ResponseWriter, r *http.Request) {
-	action := r.URL.Path[len("name"):]
 	_, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	name := args["name"]
-	addr := args["addr"]
+	name, addr := args["name"], args["addr"]
 
-	if action == "ls" {
-		names, err := coreNameList()
-		if err != nil {
-			WriteError(w, err)
-			return
-		}
-
-		b, err := json.Marshal(names)
-		if err != nil {
-			WriteError(w, err)
-			return
-		}
-		WriteResult(w, string(b))
-		return
-	}
+	logger.Debugf("name handler. name (%s). addr (%s)\n", name, addr)
 
 	if name == "" {
 		WriteError(w, fmt.Errorf("please specify a name"))
 		return
-	}
-
-	if action == "rm" {
-		if err := coreNameRm(name); err != nil {
-			WriteError(w, err)
-			return
-		}
 	}
 
 	if addr == "" {
@@ -284,6 +262,54 @@ func nameHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		WriteResult(w, fmt.Sprintf("Added name (%s) to address (%s)", name, addr))
 	}
+}
+
+func nameLsHandler(w http.ResponseWriter, r *http.Request) {
+	_, _, args, err := typeAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	name, addr := args["name"], args["addr"]
+
+	logger.Debugf("name ls handler. name (%s). addr (%s)\n", name, addr)
+
+	names, err := coreNameList()
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+
+	b, err := json.Marshal(names)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteResult(w, string(b))
+	return
+}
+
+func nameRmHandler(w http.ResponseWriter, r *http.Request) {
+	_, _, args, err := typeAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	name, addr := args["name"], args["addr"]
+
+	logger.Debugf("name rm handler. name (%s). addr (%s)\n", name, addr)
+
+	if name == "" {
+		WriteError(w, fmt.Errorf("please specify a name"))
+		return
+	}
+
+	if err := coreNameRm(name); err != nil {
+		WriteError(w, err)
+		return
+	}
+
+	WriteResult(w, fmt.Sprintf("Removed name (%s)", name))
 }
 
 // convenience function

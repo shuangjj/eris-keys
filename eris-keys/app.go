@@ -23,11 +23,12 @@ var (
 
 	/* flag vars */
 	//global
-	KeysDir string
-	KeyName string
-	KeyAddr string
-	KeyHost string
-	KeyPort string
+	LogLevel int
+	KeysDir  string
+	KeyName  string
+	KeyAddr  string
+	KeyHost  string
+	KeyPort  string
 
 	//keygenCmd only
 	NoPassword bool
@@ -36,10 +37,6 @@ var (
 	//hashCmd only
 	HashType string
 	HexByte  bool
-
-	//nameCmd only
-	RmKeyName  bool
-	LsNameAddr bool
 
 	// lockCmd only
 	UnlockTime int // minutes
@@ -54,11 +51,14 @@ var EKeys = &cobra.Command{
 
 func Execute() {
 	buildKeysCommand()
+	EKeys.PersistentPreRun = before
 	EKeys.PersistentPostRun = after
 	EKeys.Execute()
 }
 
 func buildKeysCommand() {
+	nameCmd.AddCommand(nameRmCmd, nameLsCmd)
+
 	EKeys.AddCommand(keygenCmd)
 	EKeys.AddCommand(lockCmd)
 	EKeys.AddCommand(unlockCmd)
@@ -76,90 +76,85 @@ var keygenCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate a key",
 	Long:  "Generates a key using (insert crypto pkgs used)",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliKeygen(cmd, args)
-	},
+	Run:   cliKeygen,
 }
 
 var lockCmd = &cobra.Command{
 	Use:   "lock",
 	Short: "lock a key",
 	Long:  "lock an unlocked key by re-encrypting it",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliLock(cmd, args)
-	},
+	Run:   cliLock,
 }
 
 var unlockCmd = &cobra.Command{
 	Use:   "unlock",
 	Short: "unlock a key",
 	Long:  "unlock an unlocked key by supplying the password",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliUnlock(cmd, args)
-	},
+	Run:   cliUnlock,
 }
 
 var nameCmd = &cobra.Command{
 	Use:   "name",
 	Short: "Manage key names. `eris-keys name <name> <address>`",
 	Long:  "Manage key names. `eris-keys name <name> <address>`",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliName(cmd, args)
-	},
+	Run:   cliName,
+}
+
+var nameLsCmd = &cobra.Command{
+	Use:   "ls",
+	Short: "list key names",
+	Long:  "list key names",
+	Run:   cliNameLs,
+}
+
+var nameRmCmd = &cobra.Command{
+	Use:   "rm",
+	Short: "rm key name",
+	Long:  "rm key name",
+	Run:   cliNameRm,
 }
 
 var signCmd = &cobra.Command{
 	Use:   "sign",
 	Short: "eris-keys sign --addr <address> <hash>",
 	Long:  "eris-keys sign --addr <address> <hash>",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliSign(cmd, args)
-	},
+	Run:   cliSign,
 }
 
 var pubKeyCmd = &cobra.Command{
 	Use:   "pub",
 	Short: "eris-keys pub --addr <addr>",
 	Long:  "eris-keys pub --addr <addr>",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliPub(cmd, args)
-	},
+	Run:   cliPub,
 }
 
 var verifyCmd = &cobra.Command{
 	Use:   "verify",
 	Short: "eris-keys verify --addr <addr> <hash> <sig>",
 	Long:  "eris-keys verify --addr <addr> <hash> <sig>",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliVerify(cmd, args)
-	},
+	Run:   cliVerify,
 }
 var hashCmd = &cobra.Command{
 	Use:   "hash",
 	Short: "eris-keys hash <some data>",
 	Long:  "eris-keys hash <some data>",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliHash(cmd, args)
-	},
+	Run:   cliHash,
 }
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "eris-keys server",
 	Long:  "eris-keys server",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliServer(cmd, args)
-	},
+	Run:   cliServer,
 }
 var importCmd = &cobra.Command{
 	Use:   "import",
 	Short: "eris-keys import <priv key>",
 	Long:  "eris-keys import <priv key>",
-	Run: func(cmd *cobra.Command, args []string) {
-		cliImport(cmd, args)
-	},
+	Run:   cliImport,
 }
 
 func addKeysFlags() {
+	EKeys.PersistentFlags().IntVarP(&LogLevel, "log", "l", 0, "specify the location of the directory containing key files")
 	EKeys.PersistentFlags().StringVarP(&KeysDir, "dir", "", DefaultDir, "specify the location of the directory containing key files")
 	EKeys.PersistentFlags().StringVarP(&KeyName, "name", "", "", "name of key to use")
 	EKeys.PersistentFlags().StringVarP(&KeyAddr, "addr", "", "", "address of key to use")
@@ -177,9 +172,6 @@ func addKeysFlags() {
 
 	verifyCmd.PersistentFlags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "key type")
 
-	nameCmd.PersistentFlags().BoolVarP(&RmKeyName, "rm", "", false, "removes a key's name")
-	nameCmd.PersistentFlags().BoolVarP(&LsNameAddr, "ls", "", false, "list all <name>:<address> pairs + un-named addresses")
-
 	unlockCmd.PersistentFlags().IntVarP(&UnlockTime, "time", "t", 10, "number of minutes to unlock key for. defaults to 10, 0 for forever")
 }
 
@@ -191,6 +183,10 @@ func checkMakeDataDir(dir string) error {
 		}
 	}
 	return nil
+}
+
+func before(cmd *cobra.Command, args []string) {
+	log.SetLoggers(LogLevel, os.Stdout, os.Stderr)
 }
 
 func after(cmd *cobra.Command, args []string) {

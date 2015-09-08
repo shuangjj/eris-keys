@@ -63,12 +63,12 @@ func cliPub(cmd *cobra.Command, args []string) {
 }
 
 func cliSign(cmd *cobra.Command, args []string) {
-	dir, addr, name := KeysDir, KeyAddr, KeyName
+	_, addr, name := KeysDir, KeyAddr, KeyName
 	if len(args) != 1 {
 		Exit(fmt.Errorf("enter a msg/hash to sign"))
 	}
 	msg := args[0]
-	r, err := Call("sign", map[string]string{"dir": dir, "addr": addr, "name": name, "msg": msg})
+	r, err := Call("sign", map[string]string{"addr": addr, "name": name, "msg": msg})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
 	}
@@ -117,14 +117,6 @@ func cliImport(cmd *cobra.Command, args []string) {
 }
 
 func cliName(cmd *cobra.Command, args []string) {
-	/*
-		Options:
-		- add/modify: eris-keys name <name> <address>
-		- display address: eris-keys name <name>
-		- rm (name): eris-keys name --rm <name>
-		- ls: eris-keys name --ls
-	*/
-	rm, ls := RmKeyName, LsNameAddr
 	var name, addr string
 	if len(args) > 0 {
 		name = args[0]
@@ -133,19 +125,36 @@ func cliName(cmd *cobra.Command, args []string) {
 		addr = args[1]
 	}
 
-	r, err := Call("name", map[string]string{"name": name, "addr": addr, "rm": fmt.Sprintf("%v", rm), "ls": fmt.Sprintf("%v", ls)})
+	r, err := Call("name", map[string]string{"name": name, "addr": addr})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
 	}
 	IfExit(err)
-	if ls {
-		names := make(map[string]string)
-		IfExit(json.Unmarshal([]byte(r), names))
-		for n, a := range names {
-			logger.Printf("%s: %s\n", n, a)
-		}
+	logger.Println(r)
+}
 
-	} else {
-		logger.Println(r)
+func cliNameLs(cmd *cobra.Command, args []string) {
+	r, err := Call("name/ls", map[string]string{})
+	if _, ok := err.(ErrConnectionRefused); ok {
+		ExitConnectErr(err)
 	}
+	IfExit(err)
+	names := make(map[string]string)
+	IfExit(json.Unmarshal([]byte(r), &names))
+	for n, a := range names {
+		logger.Printf("%s: %s\n", n, a)
+	}
+}
+
+func cliNameRm(cmd *cobra.Command, args []string) {
+	var name string
+	if len(args) > 0 {
+		name = args[0]
+	}
+	r, err := Call("name/rm", map[string]string{"name": name})
+	if _, ok := err.(ErrConnectionRefused); ok {
+		ExitConnectErr(err)
+	}
+	IfExit(err)
+	logger.Println(r)
 }

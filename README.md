@@ -5,60 +5,125 @@ A simple tool for generating keys, producing and verifying signatures.
 Features:
 - basic support for ECDSA (secp256k1) and Shnorr (ed25519)
 - command-line and http interfaces
-- password based encryption (AES-GCM)
+- password based encryption (AES-GCM) with time locks
+- addressing schemes and key naming
 
 ## WARNING: This is semi-audited cryptographic software. It should not yet be presumed safe. 
 
-The code is mostly a fork of go-ethereum/crypto. Major changes include removing unecessary code (like supporting other ECDSA curves),
+The code is mostly a fork of go-ethereum/crypto. Major changes include removing support for other ECDSA curves,
 adding support for ED25519, and using AES-GCM for encryption. And of course the pretty cli and http interfaces :)
 
 # CLI
 
+The cli works over an http server. To start the server run `eris-keys server &`
+
+## Generate a key, sign something, verify the signature
+
 ```
-> eris-keys gen
-552a3521a8a1021db265cf51866f7d1d07871950
-
-> eris-keys pub 552a3521a8a1021db265cf51866f7d1d07871950
-35a26ab63e3be6074fd28cf5ee739151c92f2ef05f0a1a3bf5ae13de3007fc9f
-
-> eris-keys sign 41b27cb63e3be6074fd28cf5ee739151c92f2ef05f0a1a3cf5ae13de3007fc8e 552a3521a8a1021db265cf51866f7d1d07871950
-dc74452ef6a565a32c97fd8fe47a64fbad2ce6269a70738ad6cd41c60662a33dd16c328211097282e407f9d693e437fedf5d34270ee793e8cacee594f6373800
-
-> eris-keys verify 552a3521a8a1021db265cf51866f7d1d07871950 41b27cb63e3be6074fd28cf5ee739151c92f2ef05f0a1a3cf5ae13de3007fc8e dc74452ef6a565a32c97fd8fe47a64fbad2ce6269a70738ad6cd41c60662a33dd16c328211097282e407f9d693e437fedf5d34270ee793e8cacee594f6373800
+> ADDR=`eris-keys gen --no-pass`
+> PUB=`eris-keys pub --addr $ADDR`
+> SOMETHING_TO_SIGN=41b27cb63e3be6074fd28cf5ee739151c92f2ef05f0a1a3cf5ae13de3007fc8e
+> SIG=`eris-keys sign --addr $ADDR $SOMETHING_TO_SIGN`
+> echo $SIG
+7B96F6C19EA50BFF83DEA9C80616BDBDFC885C3E7321EAF92D212CE90B9EB5898FE87D95B0A8286E4A49D0F497223C2DAFD38D50E4F6F3A39F7F7B240FDCEC03
+> eris-keys verify $SOMETHING_TO_SIGN $SIG $PUB
 true
 ```
 
-Just run `eris-keys` or `eris-keys <cmd> --help` for more.
+## Generate a key with a password
+
+```
+> eris-keys gen
+Enter Password:****
+5A87726028F91E1BC24DD051A3D7CABDBAC6DBD7
+> ADDR=5A87726028F91E1BC24DD051A3D7CABDBAC6DBD7
+> eris-keys sign --addr $ADDR $SOMETHING_TO_SIGN
+account is locked
+> eris-keys unlock --addr $ADDR
+Enter Password:****
+5A87726028F91E1BC24DD051A3D7CABDBAC6DBD7 unlocked
+> eris-keys sign --addr $ADDR $SOMETHING_TO_SIGN
+63C1563853EC12CB3EAF14EDC918AC2C5287943D0601434376D70C17380C674BB0EA9F1AC24EF3276D89AAED56E353F4AAD5B276BC3B0BB96EA0EB50EA95BA0F
+```
+
+Notice how the first time we try to sign, the account is locked. `eris-keys unlock` will unlock by default for 10 minutes. Use the `--time` flag to specify otherwise.
+
+A key can be relocked with `eris-keys lock --addr $ADDR`
+
+## Other key types
+
+Use the `--type` flag to specify a key type. The tool currently supports:
+
+- `secp256k1,sha3` (ethereum)
+- `secp256k1,ripemd160sha256` (bitcoin)
+- `ed25519,ripemd160` (tendermint)
+
+The default is `ed25519,ripemd160`. The flag is only needed for `gen`, `import`, and `verify`.
+
+## Names
+
+Use a `--name` instead of the `--addr`:
+
+```
+> ADDR=`eris-keys gen --name mykey --no-pass`
+> eris-keys pub --name mykey
+4A976DD66E4245DC6BF06DA09A856C4E28CAA514CCAEC74976A47BCF1124801A
+> eris-keys pub --addr $ADDR
+4A976DD66E4245DC6BF06DA09A856C4E28CAA514CCAEC74976A47BCF1124801A
+```
+
+Use the `eris-keys name` command to change names, remove them, or list them.
+
+## More 
+
+Run `eris-keys` or `eris-keys <cmd> --help` for more.
 
 # HTTP
 
-Start the daemon with `eris-keys --host localhost --port 12345 daemon`
+Start the daemon with `eris-keys --host localhost --port 12345 server`
 
-There are four end points:
+The endpoints:
 
-1) `/gen` 
-	- Args: `type` ("secp256k1", "ed25519")
+### Generate keys
+`/gen` 
+	- Args: `auth`, `type`, `name`
 	- Return:  newly generated address
 
-2) `/pub`
-	- Args: `addr`
+### Manage keys
+`/pub`
+	- Args: `addr`, `name`
 	- Return: the addresses' pubkey
 
-3) `/sign`
-	- Args: `addr`, `hash`
+`/sign`
+	- Args: `msg`, `addr`, `name`
 	- Return: the signature
 
-4) `/verify`
+`/unlock`
+	- Args: `auth`, `addr`, `name`
+	- Return: success statement
+
+`/lock`
+	- Args: `addr`, `name`
+	- Return: success statement
+
+`/import`
+	- Args: `type`, `key`, `name`
+	- Return: address
+
+`/name`
+	- Args: `rm`, `ls`, `name`, `addr`
+	- Return: name, address, or list of names
+
+### Utilities
+`/verify`
 	- Args: `addr`, `hash`, `sig`
 	- Return: true or false
 
-5) `/hash`
+`/hash`
 	- Args: `type` ("sha256", "ripemd160"), `data`
 	- Return: hash value
 
-All arguments are passed as keyed values in the HTTP header. The response is a struct with two strings: a return value and an error.
+
+All arguments are passed as a json encoded map in the body. The response is a struct with two strings: a return value and an error.
 
 All arguments and return values that would be byte arrays are presumend hex encoded
-
-All methods accept optional `dir` and `auth` keys, which change the base directory the keys are written to/retrieved from, and allows for password based 
-encryption of keys, respectively.
