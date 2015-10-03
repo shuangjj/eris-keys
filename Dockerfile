@@ -11,12 +11,20 @@ RUN apt-get update && \
 ENV REPOSITORY "github.com/eris-ltd/eris-keys"
 COPY . /go/src/$REPOSITORY/
 WORKDIR /go/src/$REPOSITORY/
-
 RUN chown -R $USER:$USER ./
 RUN go install
 
-USER $USER
+# set the repo and install mint-client
+ENV REPOSITORY github.com/eris-ltd/mint-client
+ENV BRANCH develop
+RUN mkdir --parents $GOPATH/src/$REPOSITORY
+WORKDIR $GOPATH/src/$REPOSITORY
+RUN git clone --quiet https://$REPOSITORY . && \
+  git checkout --quiet $BRANCH && \
+  go install ./mintkey && \
+  mv $GOPATH/bin/mintkey /usr/local/bin
 
+USER $USER
 ENV DATA "/home/eris/.eris/keys"
 RUN mkdir -p $DATA
 RUN chown -R $USER:$USER $DATA

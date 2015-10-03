@@ -25,9 +25,9 @@ deployment:
     branch: master
     commands:
       # Build Docker
-      - docker build -t eris/keys .
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push eris/keys
+      - docker build -t quay.io/eris/keys .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS quay.io
+      - docker push quay.io/eris/keys
 
       # Publish Documentation & Specs
       - go run docs/generator.go
@@ -42,11 +42,3 @@ deployment:
             git commit -m "eris-keys build number $CIRCLE_BUILD_NUM doc generation" &&
             git push origin master
           fi
-
-  develop:
-    branch: develop
-    commands:
-      # Build Docker
-      - docker build -t eris/keys:unstable .
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push eris/keys
