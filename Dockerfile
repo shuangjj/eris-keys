@@ -1,5 +1,5 @@
 # TODO - build eris/base
-FROM eris/base:latest
+FROM quay.io/eris/base:latest
 
 MAINTAINER Eris Industries <support@erisindustries.com>
 
