@@ -8,6 +8,21 @@ import (
 	"github.com/eris-ltd/eris-keys/crypto/util"
 )
 
+type InvalidCurveErr string
+
+func (err InvalidCurveErr) Error() string {
+	return fmt.Sprintf("invalid curve type %v", err)
+}
+
+type NoPrivateKeyErr string
+
+func (err NoPrivateKeyErr) Error() string {
+	return fmt.Sprintf("Private key is not available or is encrypted")
+}
+
+//-----------------------------------------------------------------------------
+// set global functions (so we can avoid dependencies in the key store itselF)
+
 type Signer func(*Key, []byte) ([]byte, error)
 
 var signer Signer
@@ -30,6 +45,9 @@ func SetPubkeyer(p Pubkeyer) {
 	pubkeyer = p
 }
 
+//-----------------------------------------------------------------------------
+// main key type
+
 type Key struct {
 	Id         uuid.UUID // Version 4 "random" for unique id not derived from key data
 	Type       KeyType   // contains curve and addr types
@@ -45,17 +63,8 @@ func (k *Key) Pubkey() ([]byte, error) {
 	return pubkeyer(k)
 }
 
-type InvalidCurveErr string
-
-func (err InvalidCurveErr) Error() string {
-	return fmt.Sprintf("invalid curve type %v", err)
-}
-
-type NoPrivateKeyErr string
-
-func (err NoPrivateKeyErr) Error() string {
-	return fmt.Sprintf("Private key is not available or is encrypted")
-}
+//-----------------------------------------------------------------------------
+// key types
 
 type KeyType struct {
 	CurveType CurveType

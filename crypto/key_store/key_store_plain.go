@@ -102,6 +102,14 @@ func GetKeyFile(keysDirPath string, keyAddr []byte) (fileContent []byte, err err
 	return ioutil.ReadFile(path.Join(keysDirPath, fileName, fileName))
 }
 
+func GetKey(keysDirPath string, keyAddr []byte, content interface{}) (err error) {
+	fileContent, err := GetKeyFile(keysDirPath, keyAddr)
+	if err != nil {
+		return
+	}
+	return json.Unmarshal(fileContent, content)
+}
+
 func WriteKeyFile(addr []byte, keysDirPath string, content []byte) (err error) {
 	addrHex := strings.ToUpper(hex.EncodeToString(addr))
 	keyDirPath := path.Join(keysDirPath, addrHex)
