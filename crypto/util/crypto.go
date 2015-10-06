@@ -1,10 +1,7 @@
-package crypto
+package util
 
 import (
 	"crypto/aes"
-	"crypto/cipher"
-	"fmt"
-	//"golang.org/x/crypto/pbkdf2"
 	"crypto/sha256"
 	"github.com/eris-ltd/eris-keys/crypto/sha3"
 
@@ -65,27 +62,4 @@ func PKCS7Unpad(in []byte) []byte {
 		}
 	}
 	return in[:len(in)-int(padding)]
-}
-
-func aesGCMDecrypt(key []byte, cipherText []byte, nonce []byte) (plainText []byte, err error) {
-	aesBlock, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(aesBlock)
-	if err != nil {
-		return nil, err
-	}
-
-	paddedPlainText, err := gcm.Open(nil, nonce, cipherText, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	plainText = PKCS7Unpad(paddedPlainText)
-	if plainText == nil {
-		err = fmt.Errorf("Decryption failed: PKCS7Unpad failed after decryption")
-	}
-	return plainText, err
 }

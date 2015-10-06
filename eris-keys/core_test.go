@@ -11,7 +11,8 @@ import (
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
 	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
-	"github.com/eris-ltd/eris-keys/crypto"
+	kstore "github.com/eris-ltd/eris-keys/crypto/key_store"
+	"github.com/eris-ltd/eris-keys/crypto/util"
 )
 
 var (
@@ -26,7 +27,7 @@ func init() {
 	log.SetLoggers(0, os.Stdout, os.Stderr)
 }
 
-func dumpKey(k *crypto.Key) {
+func dumpKey(k *kstore.Key) {
 	b, _ := k.MarshalJSON()
 	fmt.Println(string(b))
 }
@@ -65,7 +66,7 @@ func testSignAndVerify(t *testing.T, typ string) {
 		t.Fatal(err)
 	}
 
-	hash := crypto.Sha3([]byte("the hash of something!"))
+	hash := util.Sha3([]byte("the hash of something!"))
 
 	sig, err := coreSign(toHex(hash), toHex(addr))
 	if err != nil {
@@ -127,9 +128,9 @@ func checkAddrFromPub(typ string, pub, addr []byte) error {
 	var addr2 []byte
 	switch typ {
 	case "secp256k1,sha3":
-		addr2 = crypto.Sha3(pub[1:])[12:]
+		addr2 = util.Sha3(pub[1:])[12:]
 	case "secp256k1,ripemd160sha256":
-		addr2 = crypto.Ripemd160(crypto.Sha256(pub))
+		addr2 = util.Ripemd160(util.Sha256(pub))
 	case "ed25519,ripemd160":
 		// XXX: something weird here. I have seen this oscillate!
 		// addr2 = binary.BinaryRipemd160(pub)

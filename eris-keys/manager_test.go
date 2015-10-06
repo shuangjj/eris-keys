@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eris-ltd/eris-keys/crypto"
+	kstore "github.com/eris-ltd/eris-keys/crypto/key_store"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 )
 
 func TestTimedUnlock(t *testing.T) {
-	_, ks := tmpKeyStore(t, crypto.NewKeyStorePassphrase)
+	_, ks := tmpKeyStore(t, kstore.NewKeyStorePassphrase)
 	//	defer os.RemoveAll(dir)
 
 	AccountManager = NewManager(ks)
@@ -69,7 +69,7 @@ func TestTimedUnlock(t *testing.T) {
 }
 
 func TestOverrideUnlock(t *testing.T) {
-	_, ks := tmpKeyStore(t, crypto.NewKeyStorePassphrase)
+	_, ks := tmpKeyStore(t, kstore.NewKeyStorePassphrase)
 	//defer os.RemoveAll(dir)
 
 	AccountManager = NewManager(ks)
@@ -113,7 +113,7 @@ func TestOverrideUnlock(t *testing.T) {
 
 // This test should fail under -race if signing races the expiration goroutine.
 func TestSignRace(t *testing.T) {
-	_, ks := tmpKeyStore(t, crypto.NewKeyStorePassphrase)
+	_, ks := tmpKeyStore(t, kstore.NewKeyStorePassphrase)
 	//defer os.RemoveAll(dir)
 
 	// Create a test account.
@@ -140,7 +140,7 @@ func TestSignRace(t *testing.T) {
 	t.Errorf("Account did not lock within the timeout")
 }
 
-func tmpKeyStore(t *testing.T, new func(string) crypto.KeyStore) (string, crypto.KeyStore) {
+func tmpKeyStore(t *testing.T, new func(string) kstore.KeyStore) (string, kstore.KeyStore) {
 	d, err := returnDataDir(KeysDir)
 	if err != nil {
 		t.Fatal(err)

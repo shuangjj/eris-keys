@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eris-ltd/eris-keys/crypto"
+	"github.com/eris-ltd/eris-keys/crypto/util"
 )
 
 // start the server
@@ -73,7 +73,7 @@ func testServerSignAndVerify(t *testing.T, typ string) {
 	pub, errS, err := requestResponse(req)
 	checkErrs(t, errS, err)
 
-	hash := crypto.Sha3([]byte("the hash of something!"))
+	hash := util.Sha3([]byte("the hash of something!"))
 
 	body2 := formatForBody(map[string]string{"msg": toHex(hash), "addr": addr})
 	req, _ = http.NewRequest("POST", TestAddr+"/sign", body2)

@@ -24,33 +24,33 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eris-ltd/eris-keys/crypto"
+	kstore "github.com/eris-ltd/eris-keys/crypto/key_store"
 )
 
 type Manager struct {
-	keyStore crypto.KeyStore
+	keyStore kstore.KeyStore
 	unlocked map[string]*unlocked
 	mutex    sync.RWMutex
 }
 
 type unlocked struct {
-	*crypto.Key
+	*kstore.Key
 	abort chan struct{}
 }
 
-func NewManager(keyStore crypto.KeyStore) *Manager {
+func NewManager(keyStore kstore.KeyStore) *Manager {
 	return &Manager{
 		keyStore: keyStore,
 		unlocked: make(map[string]*unlocked),
 	}
 }
 
-func (am *Manager) KeyStore() crypto.KeyStore {
+func (am *Manager) KeyStore() kstore.KeyStore {
 	return am.keyStore
 }
 
 // GetKey only returns unlocked keys
-func (am *Manager) GetKey(addr []byte) *crypto.Key {
+func (am *Manager) GetKey(addr []byte) *kstore.Key {
 	am.mutex.Lock()
 	defer am.mutex.Unlock()
 	u, ok := am.unlocked[string(addr)]
@@ -129,7 +129,7 @@ func zeroKey(k []byte) {
 }
 
 func (am *Manager) Update(addr []byte, authFrom, authTo string) (err error) {
-	var key *crypto.Key
+	var key *kstore.Key
 	key, err = am.keyStore.GetKey(addr, authFrom)
 
 	if err == nil {

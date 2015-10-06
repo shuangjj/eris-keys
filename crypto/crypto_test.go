@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
+	"github.com/eris-ltd/eris-keys/crypto/util"
 )
 
 func Test0Key(t *testing.T) {
@@ -15,7 +16,7 @@ func Test0Key(t *testing.T) {
 	key, _ := hex.DecodeString("1111111111111111111111111111111111111111111111111111111111111111")
 
 	p, err := secp256k1.GeneratePubKey(key)
-	addr := Sha3(p[1:])[12:]
+	addr := util.Sha3(p[1:])[12:]
 	fmt.Printf("%x\n", p)
 	fmt.Printf("%v %x\n", err, addr)
 }
@@ -27,7 +28,7 @@ func Test0Key(t *testing.T) {
 func TestSha3(t *testing.T) {
 	msg := []byte("abc")
 	exp, _ := hex.DecodeString("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45")
-	checkhash(t, "Sha3-256", func(in []byte) []byte { return Sha3(in) }, msg, exp)
+	checkhash(t, "Sha3-256", func(in []byte) []byte { return util.Sha3(in) }, msg, exp)
 }
 
 /*
@@ -56,7 +57,7 @@ func BenchmarkSha3(b *testing.B) {
 	amount := 1000000
 	start := time.Now()
 	for i := 0; i < amount; i++ {
-		Sha3(a)
+		util.Sha3(a)
 	}
 
 	fmt.Println(amount, ":", time.Since(start))

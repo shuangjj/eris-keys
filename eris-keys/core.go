@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/eris-ltd/eris-keys/crypto"
+	kstore "github.com/eris-ltd/eris-keys/crypto/key_store"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/ripemd160"
 )
@@ -22,7 +23,7 @@ var ErrLocked = fmt.Errorf("account is locked")
 
 var AccountManager *Manager
 
-func GetKey(addr []byte) (*crypto.Key, error) {
+func GetKey(addr []byte) (*kstore.Key, error) {
 	// first check if the key is unlocked
 	k := AccountManager.GetKey(addr)
 	if k != nil {
@@ -31,7 +32,7 @@ func GetKey(addr []byte) (*crypto.Key, error) {
 	}
 	logger.Debugln("key is not unlocked")
 	// now see if we can find an encrypted version on disk
-	isEncrypted, err := crypto.IsEncryptedKey(AccountManager.KeyStore(), addr)
+	isEncrypted, err := kstore.IsEncryptedKey(AccountManager.KeyStore(), addr)
 	if err == nil && isEncrypted {
 		return nil, ErrLocked
 	}
@@ -68,15 +69,15 @@ func returnNamesDir(dir string) (string, error) {
 
 // TODO: overwrite all mem buffers/registers?
 
-func newKeyStore(dir string, auth bool) (keyStore crypto.KeyStore, err error) {
+func newKeyStore(dir string, auth bool) (keyStore kstore.KeyStore, err error) {
 	dir, err = returnDataDir(dir)
 	if err != nil {
 		return nil, err
 	}
 	if auth {
-		keyStore = crypto.NewKeyStorePassphrase(dir)
+		keyStore = kstore.NewKeyStorePassphrase(dir)
 	} else {
-		keyStore = crypto.NewKeyStorePlain(dir)
+		keyStore = kstore.NewKeyStorePlain(dir)
 	}
 	return
 }
@@ -150,7 +151,7 @@ func coreImport(auth, keyType, keyHex string) ([]byte, error) {
 }
 
 func coreKeygen(auth, keyType string) ([]byte, error) {
-	var keyStore crypto.KeyStore
+	var keyStore kstore.KeyStore
 	var err error
 
 	logger.Infof("Generating new key. Type (%s). Encrypted (%v)\n", keyType, auth != "")
@@ -164,8 +165,8 @@ func coreKeygen(auth, keyType string) ([]byte, error) {
 		keyStore = AccountManager.KeyStore()
 	}
 
-	var key *crypto.Key
-	keyT, err := crypto.KeyTypeFromString(keyType)
+	var key *kstore.Key
+	keyT, err := kstore.KeyTypeFromString(keyType)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +201,7 @@ func coreSign(hash, addr string) ([]byte, error) {
 }
 
 func coreVerify(typ, pub, hash, sig string) (result bool, err error) {
-	keyT, err := crypto.KeyTypeFromString(typ)
+	keyT, err := kstore.KeyTypeFromString(typ)
 	if err != nil {
 		return result, err
 	}

@@ -1,9 +1,11 @@
 package crypto
 
 import (
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"reflect"
 	"testing"
+
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+	. "github.com/eris-ltd/eris-keys/crypto/key_store"
 )
 
 func TestKeyStorePlain(t *testing.T) {

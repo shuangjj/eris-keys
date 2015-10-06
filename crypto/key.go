@@ -26,146 +26,39 @@ package crypto
 
 import (
 	"bytes"
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/ed25519"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
+	. "github.com/eris-ltd/eris-keys/crypto/key_store"
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
 )
 
-type InvalidCurveErr string
-
-func (err InvalidCurveErr) Error() string {
-	return fmt.Sprintf("invalid curve type %v", err)
+// on init we set the key_store functions
+func init() {
+	SetGenerator(GenerateNewKeyDefault)
+	SetSigner(Signer(Sign))
+	SetPubkeyer(Pubkeyer(Pubkey))
 }
 
-type NoPrivateKeyErr string
-
-func (err NoPrivateKeyErr) Error() string {
-	return fmt.Sprintf("Private key is not available or is encrypted")
-}
-
-type KeyType struct {
-	CurveType CurveType
-	AddrType  AddrType
-}
-
-func (typ KeyType) String() string {
-	return fmt.Sprintf("%s,%s", typ.CurveType.String(), typ.AddrType.String())
-}
-
-func KeyTypeFromString(s string) (k KeyType, err error) {
-	spl := strings.Split(s, ",")
-	if len(spl) != 2 {
-		return k, fmt.Errorf("KeyType should be (CurveType,AddrType)")
+func GenerateNewKeyDefault(ks KeyStore, typ KeyType, auth string) (key *Key, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("GenerateNewKey error: %v", r)
+		}
+	}()
+	key, err = NewKey(typ)
+	if err != nil {
+		return nil, err
 	}
-
-	cType, aType := spl[0], spl[1]
-	if k.CurveType, err = CurveTypeFromString(cType); err != nil {
-		return
-	}
-	k.AddrType, err = AddrTypeFromString(aType)
-	return
-}
-
-//-----------------------------------------------------------------------------
-// curve type
-
-type CurveType uint8
-
-func (k CurveType) String() string {
-	switch k {
-	case CurveTypeSecp256k1:
-		return "secp256k1"
-	case CurveTypeEd25519:
-		return "ed25519"
-	default:
-		return "unknown"
-	}
-}
-
-func CurveTypeFromString(s string) (CurveType, error) {
-	switch s {
-	case "secp256k1":
-		return CurveTypeSecp256k1, nil
-	case "ed25519":
-		return CurveTypeEd25519, nil
-	default:
-		var k CurveType
-		return k, InvalidCurveErr(s)
-	}
-}
-
-const (
-	CurveTypeSecp256k1 CurveType = iota
-	CurveTypeEd25519
-)
-
-//-----------------------------------------------------------------------------
-// address type
-
-type AddrType uint8
-
-func (a AddrType) String() string {
-	switch a {
-	case AddrTypeRipemd160:
-		return "ripemd160"
-	case AddrTypeRipemd160Sha256:
-		return "ripemd160sha256"
-	case AddrTypeSha3:
-		return "sha3"
-	default:
-		return "unknown"
-	}
-}
-
-func AddrTypeFromString(s string) (AddrType, error) {
-	switch s {
-	case "ripemd160":
-		return AddrTypeRipemd160, nil
-	case "ripemd160sha256":
-		return AddrTypeRipemd160Sha256, nil
-	case "sha3":
-		return AddrTypeSha3, nil
-	default:
-		var a AddrType
-		return a, fmt.Errorf("unknown addr type %s", s)
-	}
-}
-
-const (
-	AddrTypeRipemd160 AddrType = iota
-	AddrTypeRipemd160Sha256
-	AddrTypeSha3
-)
-
-func AddressFromPub(addrType AddrType, pub []byte) (addr []byte) {
-	switch addrType {
-	case AddrTypeRipemd160:
-		// let tendermint/binary handle because
-		// it encodes the type byte ...
-	case AddrTypeRipemd160Sha256:
-		addr = Ripemd160(Sha256(pub))
-	case AddrTypeSha3:
-		addr = Sha3(pub[1:])[12:]
-	}
-	return
+	err = ks.StoreKey(key, auth)
+	return key, err
 }
 
 //-----------------------------------------------------------------------------
 // main key struct and functions (sign, pubkey, verify)
-
-type Key struct {
-	Id         uuid.UUID // Version 4 "random" for unique id not derived from key data
-	Type       KeyType   // contains curve and addr types
-	Address    []byte    // reference id
-	PrivateKey []byte    // we don't store pub
-}
 
 func NewKey(typ KeyType) (*Key, error) {
 	switch typ.CurveType {
@@ -189,7 +82,7 @@ func NewKeyFromPriv(typ KeyType, priv []byte) (*Key, error) {
 	}
 }
 
-func (k *Key) Sign(hash []byte) ([]byte, error) {
+func Sign(k *Key, hash []byte) ([]byte, error) {
 	switch k.Type.CurveType {
 	case CurveTypeSecp256k1:
 		return signSecp256k1(k, hash)
@@ -199,7 +92,7 @@ func (k *Key) Sign(hash []byte) ([]byte, error) {
 	return nil, InvalidCurveErr(k.Type.CurveType)
 }
 
-func (k *Key) Pubkey() ([]byte, error) {
+func Pubkey(k *Key) ([]byte, error) {
 	switch k.Type.CurveType {
 	case CurveTypeSecp256k1:
 		return pubKeySecp256k1(k)
@@ -217,84 +110,6 @@ func Verify(curveType CurveType, hash, sig, pub []byte) (bool, error) {
 		return verifySigEd25519(hash, sig, pub)
 	}
 	return false, InvalidCurveErr(curveType)
-}
-
-//-----------------------------------------------------------------------------
-// json encodings
-
-// addresses should be hex encoded
-
-type plainKeyJSON struct {
-	Id         []byte
-	Type       string
-	Address    string
-	PrivateKey []byte
-}
-
-type cipherJSON struct {
-	Salt       []byte
-	Nonce      []byte
-	CipherText []byte
-}
-
-type encryptedKeyJSON struct {
-	Id      []byte
-	Type    string
-	Address string
-	Crypto  cipherJSON
-}
-
-func (k *Key) MarshalJSON() (j []byte, err error) {
-	jStruct := plainKeyJSON{
-		k.Id,
-		k.Type.String(),
-		fmt.Sprintf("%X", k.Address),
-		k.PrivateKey,
-	}
-	j, err = json.Marshal(jStruct)
-	return j, err
-}
-
-func (k *Key) UnmarshalJSON(j []byte) (err error) {
-	keyJSON := new(plainKeyJSON)
-	err = json.Unmarshal(j, &keyJSON)
-	if err != nil {
-		return err
-	}
-	// TODO: remove this
-	if len(keyJSON.PrivateKey) == 0 {
-		return NoPrivateKeyErr("")
-	}
-
-	u := new(uuid.UUID)
-	*u = keyJSON.Id
-	k.Id = *u
-	k.Address, err = hex.DecodeString(keyJSON.Address)
-	if err != nil {
-		return err
-	}
-	k.PrivateKey = keyJSON.PrivateKey
-	k.Type, err = KeyTypeFromString(keyJSON.Type)
-	return err
-}
-
-// returns the address if valid, nil otherwise
-func IsValidKeyJson(j []byte) []byte {
-	j1 := new(plainKeyJSON)
-	e1 := json.Unmarshal(j, &j1)
-	if e1 == nil {
-		addr, _ := hex.DecodeString(j1.Address)
-		return addr
-	}
-
-	j2 := new(encryptedKeyJSON)
-	e2 := json.Unmarshal(j, &j2)
-	if e2 == nil {
-		addr, _ := hex.DecodeString(j2.Address)
-		return addr
-	}
-
-	return nil
 }
 
 //-----------------------------------------------------------------------------

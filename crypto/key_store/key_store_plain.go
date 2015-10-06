@@ -23,20 +23,32 @@
 
  */
 
-package crypto
+package key_store
 
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 )
 
+type KeyGenerator func(KeyStore, KeyType, string) (*Key, error)
+
+// generator can be passed in
+var gen KeyGenerator
+
+// keys cannot be generated unless this is explicitly set, and can only be set once per process
+func SetGenerator(g KeyGenerator) {
+	if gen != nil {
+		return
+	}
+	gen = g
+}
+
 type KeyStore interface {
-	GenerateNewKey(tpy KeyType, auth string) (*Key, error)
+	GenerateNewKey(typ KeyType, auth string) (*Key, error)
 	GetKey(addr []byte, auth string) (*Key, error)
 	GetAllAddresses() ([][]byte, error)
 	StoreKey(key *Key, auth string) error
@@ -52,21 +64,7 @@ func NewKeyStorePlain(path string) KeyStore {
 }
 
 func (ks keyStorePlain) GenerateNewKey(typ KeyType, auth string) (key *Key, err error) {
-	return GenerateNewKeyDefault(ks, typ, auth)
-}
-
-func GenerateNewKeyDefault(ks KeyStore, typ KeyType, auth string) (key *Key, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("GenerateNewKey error: %v", r)
-		}
-	}()
-	key, err = NewKey(typ)
-	if err != nil {
-		return nil, err
-	}
-	err = ks.StoreKey(key, auth)
-	return key, err
+	return gen(ks, typ, auth)
 }
 
 func (ks keyStorePlain) GetKey(keyAddr []byte, auth string) (key *Key, err error) {

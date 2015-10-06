@@ -71,7 +71,7 @@ References:
 	that may only be used once ever per key
 */
 
-package crypto
+package key_store
 
 import (
 	"bytes"
@@ -87,6 +87,7 @@ import (
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/scrypt" // 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
+	"github.com/eris-ltd/eris-keys/crypto/util"
 )
 
 const (
@@ -105,7 +106,7 @@ func NewKeyStorePassphrase(path string) KeyStore {
 }
 
 func (ks keyStorePassphrase) GenerateNewKey(typ KeyType, auth string) (key *Key, err error) {
-	return GenerateNewKeyDefault(ks, typ, auth)
+	return gen(ks, typ, auth)
 }
 
 func (ks keyStorePassphrase) GetKey(keyAddr []byte, auth string) (key *Key, err error) {
@@ -129,7 +130,7 @@ func (ks keyStorePassphrase) StoreKey(key *Key, auth string) (err error) {
 	}
 
 	keyBytes := key.PrivateKey
-	toEncrypt := PKCS7Pad(keyBytes)
+	toEncrypt := util.PKCS7Pad(keyBytes)
 
 	AES256Block, err := aes.NewCipher(derivedKey)
 	if err != nil {
@@ -238,4 +239,105 @@ func DecryptKey(ks keyStorePassphrase, keyAddr []byte, auth string) (*Key, error
 		Address:    keyAddr,
 		PrivateKey: plainText,
 	}, nil
+}
+
+func aesGCMDecrypt(key []byte, cipherText []byte, nonce []byte) (plainText []byte, err error) {
+	aesBlock, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	gcm, err := cipher.NewGCM(aesBlock)
+	if err != nil {
+		return nil, err
+	}
+
+	paddedPlainText, err := gcm.Open(nil, nonce, cipherText, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	plainText = util.PKCS7Unpad(paddedPlainText)
+	if plainText == nil {
+		err = fmt.Errorf("Decryption failed: PKCS7Unpad failed after decryption")
+	}
+	return plainText, err
+}
+
+//-----------------------------------------------------------------------------
+// json encodings
+
+// addresses should be hex encoded
+
+type plainKeyJSON struct {
+	Id         []byte
+	Type       string
+	Address    string
+	PrivateKey []byte
+}
+
+type cipherJSON struct {
+	Salt       []byte
+	Nonce      []byte
+	CipherText []byte
+}
+
+type encryptedKeyJSON struct {
+	Id      []byte
+	Type    string
+	Address string
+	Crypto  cipherJSON
+}
+
+func (k *Key) MarshalJSON() (j []byte, err error) {
+	jStruct := plainKeyJSON{
+		k.Id,
+		k.Type.String(),
+		fmt.Sprintf("%X", k.Address),
+		k.PrivateKey,
+	}
+	j, err = json.Marshal(jStruct)
+	return j, err
+}
+
+func (k *Key) UnmarshalJSON(j []byte) (err error) {
+	keyJSON := new(plainKeyJSON)
+	err = json.Unmarshal(j, &keyJSON)
+	if err != nil {
+		return err
+	}
+	// TODO: remove this
+	if len(keyJSON.PrivateKey) == 0 {
+		return NoPrivateKeyErr("")
+	}
+
+	u := new(uuid.UUID)
+	*u = keyJSON.Id
+	k.Id = *u
+	k.Address, err = hex.DecodeString(keyJSON.Address)
+	if err != nil {
+		return err
+	}
+	k.PrivateKey = keyJSON.PrivateKey
+	k.Type, err = KeyTypeFromString(keyJSON.Type)
+	return err
+}
+
+// returns the address if valid, nil otherwise
+func IsValidKeyJson(j []byte) []byte {
+	j1 := new(plainKeyJSON)
+	e1 := json.Unmarshal(j, &j1)
+	if e1 == nil {
+		addr, _ := hex.DecodeString(j1.Address)
+		return addr
+	}
+
+	j2 := new(encryptedKeyJSON)
+	e2 := json.Unmarshal(j, &j2)
+	if e2 == nil {
+		addr, _ := hex.DecodeString(j2.Address)
+		return addr
+	}
+
+	return nil
 }
