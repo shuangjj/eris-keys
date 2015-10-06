@@ -127,7 +127,7 @@ func newKeySecp256k1(addrType AddrType) *Key {
 }
 
 func newKeyEd25519(addrType AddrType) *Key {
-	randBytes := randentropy.GetEntropyMixed(32)
+	randBytes := randentropy.GetEntropyCSPRNG(32)
 	key, _ := keyFromPrivEd25519(addrType, randBytes)
 	return key
 }

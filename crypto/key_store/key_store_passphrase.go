@@ -123,7 +123,7 @@ func (ks keyStorePassphrase) GetAllAddresses() (addresses [][]byte, err error) {
 
 func (ks keyStorePassphrase) StoreKey(key *Key, auth string) (err error) {
 	authArray := []byte(auth)
-	salt := randentropy.GetEntropyMixed(32)
+	salt := randentropy.GetEntropyCSPRNG(32)
 	derivedKey, err := scrypt.Key(authArray, salt, scryptN, scryptr, scryptp, scryptdkLen)
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (ks keyStorePassphrase) StoreKey(key *Key, auth string) (err error) {
 	}
 
 	// XXX: a GCM nonce may only be used once per key ever!
-	nonce := randentropy.GetEntropyMixed(gcm.NonceSize())
+	nonce := randentropy.GetEntropyCSPRNG(gcm.NonceSize())
 
 	// (dst, nonce, plaintext, extradata)
 	cipherText := gcm.Seal(nil, nonce, toEncrypt, nil)

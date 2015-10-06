@@ -16,7 +16,8 @@ type randEntropy struct {
 }
 
 func (*randEntropy) Read(bytes []byte) (n int, err error) {
-	readBytes := GetEntropyMixed(len(bytes))
+	// readBytes := GetEntropyMixed(len(bytes)) // too controversial...
+	readBytes := GetEntropyCSPRNG(len(bytes))
 	copy(bytes, readBytes)
 	return len(bytes), nil
 }
@@ -29,7 +30,8 @@ func Sha3(data []byte) []byte {
 	return d.Sum(nil)
 }
 
-// TODO: verify. this needs to be audited
+// This is apparently controversial though it may protect from bad OS rngs.
+// TODO: audit and use
 // we start with crypt/rand, then XOR in additional entropy from OS
 func GetEntropyMixed(n int) []byte {
 	startTime := time.Now().UnixNano()
