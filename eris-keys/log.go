@@ -6,6 +6,6 @@ import (
 
 var logger *Logger
 
-func init() {
+func initLog() {
 	logger = AddLogger("commands")
 }

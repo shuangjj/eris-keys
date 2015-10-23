@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/rs/cors"
@@ -36,12 +35,6 @@ func StartServer(host, port string) error {
 	mux.HandleFunc("/name/rm", nameRmHandler)
 	mux.HandleFunc("/unlock", unlockHandler)
 	mux.HandleFunc("/lock", lockHandler)
-	if os.Getenv("ERIS_KEYS_HOST") != "" {
-		host = os.Getenv("ERIS_KEYS_HOST")
-	}
-	if os.Getenv("ERIS_KEYS_PORT") != "" {
-		port = os.Getenv("ERIS_KEYS_PORT")
-	}
 
 	logger.Infof("Starting eris-keys server on %s:%s\n", host, port)
 	c := cors.New(cors.Options{

@@ -1,12 +1,25 @@
 package keys
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
 )
+
+func init() {
+	initLog()
+
+	// note these are only for use by the client
+	if keysHost := os.Getenv("ERIS_KEYS_HOST"); keysHost != "" {
+		DefaultHost = keysHost
+	}
+	if keysPort := os.Getenv("ERIS_KEYS_PORT"); keysPort != "" {
+		DefaultPort = keysPort
+	}
+}
 
 var (
 	DefaultKeyType  = "ed25519,ripemd160"
@@ -15,11 +28,11 @@ var (
 
 	DefaultHost = "localhost"
 	DefaultPort = "4767"
-	DefaultAddr = "http://" + DefaultHost + ":" + DefaultPort
 	TestPort    = "7674"
 	TestAddr    = "http://" + DefaultHost + ":" + TestPort
 
-	DaemonAddr = DefaultAddr
+	// set in before()
+	DaemonAddr string
 
 	/* flag vars */
 	//global
@@ -158,8 +171,8 @@ func addKeysFlags() {
 	EKeys.PersistentFlags().StringVarP(&KeysDir, "dir", "", DefaultDir, "specify the location of the directory containing key files")
 	EKeys.PersistentFlags().StringVarP(&KeyName, "name", "", "", "name of key to use")
 	EKeys.PersistentFlags().StringVarP(&KeyAddr, "addr", "", "", "address of key to use")
-	EKeys.PersistentFlags().StringVarP(&KeyHost, "host", "", DefaultHost, "set the host for key daemon to listen on")
-	EKeys.PersistentFlags().StringVarP(&KeyPort, "port", "", DefaultPort, "set the host for key daemon to listen on")
+	EKeys.PersistentFlags().StringVarP(&KeyHost, "host", "", DefaultHost, "set the host for talking to the key daemon")
+	EKeys.PersistentFlags().StringVarP(&KeyPort, "port", "", DefaultPort, "set the port for key daemon to listen on")
 
 	keygenCmd.Flags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "specify the type of key to create. Supports 'secp256k1,sha3' (ethereum),  'secp256k1,ripemd160sha2' (bitcoin), 'ed25519,ripemd160' (tendermint)")
 	keygenCmd.Flags().BoolVarP(&NoPassword, "no-pass", "", false, "don't use a password for this key")
@@ -187,6 +200,8 @@ func checkMakeDataDir(dir string) error {
 
 func before(cmd *cobra.Command, args []string) {
 	log.SetLoggers(LogLevel, os.Stdout, os.Stderr)
+
+	DaemonAddr = fmt.Sprintf("http://%s:%s", KeyHost, KeyPort)
 }
 
 func after(cmd *cobra.Command, args []string) {
