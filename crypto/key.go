@@ -38,6 +38,20 @@ import (
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
 )
 
+//----------------from mint-cleint godeps for mintkey --------
+type Pubkeyer func(*Key) ([]byte, error)
+
+var pubkeyer Pubkeyer
+
+func SetPubkeyer(p Pubkeyer) {
+	if pubkeyer != nil {
+		return
+	}
+	pubkeyer = p
+}
+
+//-------------------------------------------------
+
 type InvalidCurveErr string
 
 func (err InvalidCurveErr) Error() string {

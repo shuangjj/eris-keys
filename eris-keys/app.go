@@ -3,6 +3,7 @@ package keys
 import (
 	"fmt"
 	"os"
+	"os/user"
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
@@ -22,8 +23,11 @@ func init() {
 }
 
 var (
+	usr, _ = user.Current() // from mintkey
+
 	DefaultKeyType  = "ed25519,ripemd160"
 	DefaultDir      = common.KeysPath
+	DefaultKeyStore = common.KeysDataPath
 	DefaultHashType = "sha256"
 
 	DefaultHost = "localhost"
@@ -82,6 +86,8 @@ func buildKeysCommand() {
 	EKeys.AddCommand(hashCmd)
 	EKeys.AddCommand(serverCmd)
 	EKeys.AddCommand(importCmd)
+	EKeys.AddCommand(erisToMintCmd)
+	EKeys.AddCommand(mintToErisCmd)
 	addKeysFlags()
 }
 
@@ -164,6 +170,20 @@ var importCmd = &cobra.Command{
 	Short: "eris-keys import <priv key>",
 	Long:  "eris-keys import <priv key>",
 	Run:   cliImport,
+}
+
+var erisToMintCmd = &cobra.Command{
+	Use:   "mint",
+	Short: "Convert an eris-keys key to a priv_validator.json",
+	Long:  "eris-keys mint <address>",
+	Run:   cliConvertErisKeyToPrivValidator,
+}
+
+var mintToErisCmd = &cobra.Command{
+	Use:   "eris",
+	Short: "Convert a priv_validator.json to an eris-keys key",
+	Long:  "eris-keys eris <path/to/priv_validator.json>",
+	Run:   cliConvertPrivValidatorToErisKey,
 }
 
 func addKeysFlags() {
