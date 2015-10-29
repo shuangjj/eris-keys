@@ -3,14 +3,14 @@ package keys
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
+	//	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
 
-	kstore "github.com/eris-ltd/mint-client/Godeps/_workspace/src/github.com/eris-ltd/eris-keys/crypto/key_store"
-	"github.com/eris-ltd/mint-client/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
+	"github.com/eris-ltd/eris-keys/crypto"
 )
 
 var keyPath string
@@ -42,8 +42,8 @@ func TestErisToMint(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Printf("%v\n", string(wire.JSONBytes(pv)))
-	fmt.Printf("%v\n", mintKey)
+	//fmt.Printf("%v\n", string(wire.JSONBytes(pv)))
+	//fmt.Printf("%v\n", mintKey)
 
 	if string(wire.JSONBytes(pv)) != mintKey {
 		t.Fatalf("got \n%s \n\n expected \n %s\n", string(wire.JSONBytes(pv)), mintKey)
@@ -56,7 +56,7 @@ func TestMintToEris(t *testing.T) {
 	if err := os.MkdirAll(DefaultKeyStore, 0700); err != nil {
 		t.Fatal(err)
 	}
-	key := new(kstore.Key)
+	key := new(crypto.Key)
 	if err := key.UnmarshalJSON([]byte(erisKey)); err != nil {
 		t.Fatal(err)
 	}
