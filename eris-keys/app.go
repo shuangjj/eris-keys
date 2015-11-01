@@ -161,8 +161,8 @@ var serverCmd = &cobra.Command{
 }
 var importCmd = &cobra.Command{
 	Use:   "import",
-	Short: "eris-keys import <priv key>",
-	Long:  "eris-keys import <priv key>",
+	Short: "eris-keys import <priv key> | /path/to/keyfile | <key json>",
+	Long:  "eris-keys import <priv key> | /path/to/keyfile | <key json>",
 	Run:   cliImport,
 }
 
@@ -180,8 +180,8 @@ func addKeysFlags() {
 	hashCmd.PersistentFlags().StringVarP(&HashType, "type", "t", DefaultHashType, "specify the hash function to use")
 	hashCmd.PersistentFlags().BoolVarP(&HexByte, "hex", "", false, "the input should be hex decoded to bytes first")
 
-	//not sure if importCmd is correct. Check cliImport for more details
 	importCmd.PersistentFlags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "import a key")
+	importCmd.Flags().BoolVarP(&NoPassword, "no-pass", "", false, "don't use a password for this key")
 
 	verifyCmd.PersistentFlags().StringVarP(&KeyType, "type", "t", DefaultKeyType, "key type")
 

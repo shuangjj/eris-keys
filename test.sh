@@ -74,35 +74,45 @@ echo "testing imports"
 # for each key type, import a priv key, ensure it returns
 # the right address. do again with both plain and encrypted jsons
 
-#for KEYTYPE in ${KEYTYPES[*]}
-#do
-#	echo "... $KEYTYPE"
-#	# create a key, get its address and priv, backup the json, delete the key
-#	ADDR=`eris-keys gen --type $KEYTYPE --no-pass`
-#	DIR=/home/$USER/.eris/keys/data/$ADDR
-#	FILE=$DIR/$ADDR
-#	PRIV=`cat $FILE |  jq -r .PrivateKey`
-#	HEXPRIV=`echo -n "$PRIV" | base64 -d | hexdump -ve '1/1 "%.2X"'`
-#	cp $FILE ~/$ADDR
-#	rm -rf $DIR
-#
-#	# import the key via priv
-#	ADDR2=`eris-keys import --type $KEYTYPE $HEXPRIV`
-#	if [ "$ADDR" != "$ADDR2" ]; then
-#		echo "FAILED import $KEYTYPE: got $ADDR2 expected $ADDR"	
-#		exit
-#	fi
-#	rm -rf $DIR
-#	# import the key via json
-#	JSON=`cat ~/$ADDR`
-#	ADDR2=`eris-keys import --type $KEYTYPE $JSON`
-#	if [ "$ADDR" != "$ADDR2" ]; then
-#		echo "FAILED import (json) $KEYTYPE: got $ADDR2 expected $ADDR"	
-#		exit
-#	fi
-#
-#	echo "...... passed raw hex and json"
-#done
+for KEYTYPE in ${KEYTYPES[*]}
+do
+	echo "... $KEYTYPE"
+	# create a key, get its address and priv, backup the json, delete the key
+	ADDR=`eris-keys gen --type $KEYTYPE --no-pass`
+	DIR=/home/$USER/.eris/keys/data/$ADDR
+	FILE=$DIR/$ADDR
+	PRIV=`cat $FILE |  jq -r .PrivateKey`
+	HEXPRIV=`echo -n "$PRIV" | base64 -d | hexdump -ve '1/1 "%.2X"'`
+	cp $FILE ~/$ADDR
+	rm -rf $DIR
+
+	# import the key via priv
+	ADDR2=`eris-keys import --type $KEYTYPE $HEXPRIV`
+	if [ "$ADDR" != "$ADDR2" ]; then
+		echo "FAILED import $KEYTYPE: got $ADDR2 expected $ADDR"	
+		exit
+	fi
+	rm -rf $DIR
+
+	# import the key via json
+	JSON=`cat ~/$ADDR`
+	ADDR2=`eris-keys import --type $KEYTYPE $JSON`
+	if [ "$ADDR" != "$ADDR2" ]; then
+		echo "FAILED import (json) $KEYTYPE: got $ADDR2 expected $ADDR"	
+		exit
+	fi
+	rm -rf $DIR
+
+	# import the key via path
+	ADDR2=`eris-keys import --type $KEYTYPE ~/$ADDR`
+	if [ "$ADDR" != "$ADDR2" ]; then
+		echo "FAILED import $KEYTYPE: got $ADDR2 expected $ADDR"	
+		exit
+	fi
+	rm -rf $DIR
+
+	echo "...... passed raw hex and json"
+done
 
 
 echo "testing names"

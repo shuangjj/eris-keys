@@ -102,13 +102,19 @@ func cliHash(cmd *cobra.Command, args []string) {
 	logger.Println(r)
 }
 
-// TODO: password
 func cliImport(cmd *cobra.Command, args []string) {
 	if len(args) != 1 {
-		Exit(fmt.Errorf("enter a private key or filename"))
+		Exit(fmt.Errorf("enter a private key, filename, or raw json"))
 	}
+
+	var auth string
+	if !NoPassword {
+		logger.Println("Please note that this encryption will only take effect if you passed a raw private key (TODO!).")
+		auth = hiddenAuth()
+	}
+
 	key := args[0]
-	r, err := Call("import", map[string]string{"name": KeyName, "type": KeyType, "key": key})
+	r, err := Call("import", map[string]string{"auth": auth, "name": KeyName, "type": KeyType, "key": key})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
 	}

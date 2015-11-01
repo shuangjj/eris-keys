@@ -37,7 +37,7 @@ func GetKey(addr []byte) (*crypto.Key, error) {
 	}
 
 	// else, it should be unencrypted on disk
-	keyStore, err := newKeyStore(KeysDir, false)
+	keyStore, err := newKeyStore()
 	if err != nil {
 		return nil, err
 	}
@@ -68,85 +68,92 @@ func returnNamesDir(dir string) (string, error) {
 
 // TODO: overwrite all mem buffers/registers?
 
-func newKeyStore(dir string, auth bool) (keyStore crypto.KeyStore, err error) {
-	dir, err = returnDataDir(dir)
+func newKeyStore() (crypto.KeyStore, error) {
+	dir, err := returnDataDir(KeysDir)
 	if err != nil {
 		return nil, err
 	}
-	if auth {
-		keyStore = crypto.NewKeyStorePassphrase(dir)
-	} else {
-		keyStore = crypto.NewKeyStorePlain(dir)
+	return crypto.NewKeyStorePlain(dir), nil
+}
+
+func newKeyStoreAuth() (crypto.KeyStore, error) {
+	dir, err := returnDataDir(KeysDir)
+	if err != nil {
+		return nil, err
 	}
-	return
+	return crypto.NewKeyStorePassphrase(dir), nil
 }
 
 //----------------------------------------------------------------
+func writeKey(keyDir string, addr, keyJson []byte) ([]byte, error) {
+	dir, err := returnDataDir(keyDir)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get keys dir: %v", err)
+	}
+	if err := crypto.WriteKeyFile(addr, dir, keyJson); err != nil {
+		return nil, err
+	}
+	return addr, nil
+}
 
-// TODO: ...
-func coreImport(auth, keyType, keyHex string) ([]byte, error) {
-	return nil, nil
-	/*
-		keyStore, err := newKeyStore(dir, auth)
-		if err != nil {
+func coreImport(auth, keyType, theKey string) ([]byte, error) {
+	var keyStore crypto.KeyStore
+	var err error
+
+	logger.Infof("Importing key. Type (%s). Encrypted (%v)\n", keyType, auth != "")
+
+	if auth == "" {
+		if keyStore, err = newKeyStore(); err != nil {
 			return nil, err
 		}
+	} else {
+		keyStore = AccountManager.KeyStore()
+	}
 
-		// if the keyHex is actually json, make sure
-		// its a valid key, write to file
-		if len(keyHex) > 0 && keyHex[:1] == "{" {
-			keyJson := []byte(keyHex)
-			if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
-				dir, err = returnDataDir(dir)
-				if err != nil {
-					return nil, err
-				}
-				if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
-					return nil, err
-				}
-				return addr, nil
-			} else {
-				return nil, fmt.Errorf("invalid json key passed on command line")
-			}
-		}
+	// TODO: unmarshal json and use auth to encrypt
 
-		if _, err := os.Stat(keyHex); err == nil {
-			keyJson, _ := ioutil.ReadFile(keyHex)
-			if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
-				dir, err = returnDataDir(dir)
-				if err != nil {
-					return nil, err
-				}
-				if err := ioutil.WriteFile(path.Join(dir, strings.ToUpper(hex.EncodeToString(addr))), keyJson, 0600); err != nil {
-					return nil, err
-				}
-				return addr, nil
-			} else {
-				return nil, fmt.Errorf("file was not a valid json key")
-			}
+	// if theKey is actually json, make sure
+	// its a valid key, write to file
+	if len(theKey) > 0 && theKey[:1] == "{" {
+		keyJson := []byte(theKey)
+		if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
+			return writeKey(KeysDir, addr, keyJson)
+		} else {
+			return nil, fmt.Errorf("invalid json key passed on command line")
 		}
+	}
 
-		keyBytes, err := hex.DecodeString(keyHex)
-		if err != nil {
-			return nil, fmt.Errorf("private key is not a valid json key or known file, or is invalid hex: %v", err)
+	// if theKey is a path, copy the file over
+	if _, err := os.Stat(theKey); err == nil {
+		keyJson, _ := ioutil.ReadFile(theKey)
+		if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
+			return writeKey(KeysDir, addr, keyJson)
+		} else {
+			return nil, fmt.Errorf("file was not a valid json key")
 		}
+	}
 
-		keyT, err := crypto.KeyTypeFromString(keyType)
-		if err != nil {
-			return nil, err
-		}
-		key, err := crypto.NewKeyFromPriv(keyT, keyBytes)
-		if err != nil {
-			return nil, err
-		}
+	// else theKey is presumably a hex encoded private key
+	keyBytes, err := hex.DecodeString(theKey)
+	if err != nil {
+		return nil, fmt.Errorf("private key is not a valid json key or known file, or is invalid hex: %v", err)
+	}
 
-		// store the new key
-		if err = keyStore.StoreKey(key, auth); err != nil {
-			return nil, err
-		}
+	keyT, err := crypto.KeyTypeFromString(keyType)
+	if err != nil {
+		return nil, err
+	}
+	key, err := crypto.NewKeyFromPriv(keyT, keyBytes)
+	if err != nil {
+		return nil, err
+	}
 
-		return key.Address, nil
-	*/
+	// store the new key
+	if err = keyStore.StoreKey(key, auth); err != nil {
+		return nil, err
+	}
+
+	return key.Address, nil
 }
 
 func coreKeygen(auth, keyType string) ([]byte, error) {
@@ -156,7 +163,7 @@ func coreKeygen(auth, keyType string) ([]byte, error) {
 	logger.Infof("Generating new key. Type (%s). Encrypted (%v)\n", keyType, auth != "")
 
 	if auth == "" {
-		keyStore, err = newKeyStore(KeysDir, false)
+		keyStore, err = newKeyStore()
 		if err != nil {
 			return nil, err
 		}

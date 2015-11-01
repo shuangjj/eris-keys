@@ -16,7 +16,7 @@ import (
 // the server process also maintains the unlocked accounts
 
 func StartServer(host, port string) error {
-	ks, err := newKeyStore(KeysDir, true)
+	ks, err := newKeyStoreAuth()
 	if err != nil {
 		return err
 	}
