@@ -123,20 +123,10 @@ func coreImport(auth, keyType, theKey string) ([]byte, error) {
 		}
 	}
 
-	// if theKey is a path, copy the file over
-	if _, err := os.Stat(theKey); err == nil {
-		keyJson, _ := ioutil.ReadFile(theKey)
-		if addr := crypto.IsValidKeyJson(keyJson); addr != nil {
-			return writeKey(KeysDir, addr, keyJson)
-		} else {
-			return nil, fmt.Errorf("file was not a valid json key")
-		}
-	}
-
 	// else theKey is presumably a hex encoded private key
 	keyBytes, err := hex.DecodeString(theKey)
 	if err != nil {
-		return nil, fmt.Errorf("private key is not a valid json key or known file, or is invalid hex: %v", err)
+		return nil, fmt.Errorf("private key is not a valid json or is invalid hex: %v", err)
 	}
 
 	keyT, err := crypto.KeyTypeFromString(keyType)

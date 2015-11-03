@@ -3,6 +3,8 @@ package keys
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 
@@ -107,13 +109,21 @@ func cliImport(cmd *cobra.Command, args []string) {
 		Exit(fmt.Errorf("enter a private key, filename, or raw json"))
 	}
 
+	key := args[0]
+
+	// if the key is a path, read it
+	if _, err := os.Stat(key); err == nil {
+		keyBytes, err := ioutil.ReadFile(key)
+		key = string(keyBytes)
+		IfExit(err)
+	}
+
 	var auth string
 	if !NoPassword {
 		logger.Println("Please note that this encryption will only take effect if you passed a raw private key (TODO!).")
 		auth = hiddenAuth()
 	}
 
-	key := args[0]
 	r, err := Call("import", map[string]string{"auth": auth, "name": KeyName, "type": KeyType, "key": key})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
