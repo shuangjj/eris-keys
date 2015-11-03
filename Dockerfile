@@ -32,5 +32,4 @@ RUN chown -R $USER:$USER $DATA
 # Final Config
 VOLUME $DATA
 EXPOSE 4767
-ENTRYPOINT ["eris-keys"]
-CMD ["server", "--host", "0.0.0.0"]
+CMD ["eris-keys", "server", "--host", "0.0.0.0", "--log", "3"]
