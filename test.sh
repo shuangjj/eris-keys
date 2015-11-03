@@ -87,7 +87,7 @@ do
 	rm -rf $DIR
 
 	# import the key via priv
-	ADDR2=`eris-keys import --type $KEYTYPE $HEXPRIV`
+	ADDR2=`eris-keys import --no-pass --type $KEYTYPE $HEXPRIV`
 	if [ "$ADDR" != "$ADDR2" ]; then
 		echo "FAILED import $KEYTYPE: got $ADDR2 expected $ADDR"	
 		exit
@@ -96,7 +96,7 @@ do
 
 	# import the key via json
 	JSON=`cat ~/$ADDR`
-	ADDR2=`eris-keys import --type $KEYTYPE $JSON`
+	ADDR2=`eris-keys import --no-pass --type $KEYTYPE $JSON`
 	if [ "$ADDR" != "$ADDR2" ]; then
 		echo "FAILED import (json) $KEYTYPE: got $ADDR2 expected $ADDR"	
 		exit
@@ -104,7 +104,7 @@ do
 	rm -rf $DIR
 
 	# import the key via path
-	ADDR2=`eris-keys import --type $KEYTYPE ~/$ADDR`
+	ADDR2=`eris-keys import --no-pass --type $KEYTYPE ~/$ADDR`
 	if [ "$ADDR" != "$ADDR2" ]; then
 		echo "FAILED import $KEYTYPE: got $ADDR2 expected $ADDR"	
 		exit
