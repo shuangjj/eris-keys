@@ -6,6 +6,7 @@ import "sync"
 /*
 RepeatTimer repeatedly sends a struct{}{} to .Ch after each "dur" period.
 It's good for keeping connections alive.
+A RepeatTimer must be Stop()'d or it will keep a goroutine alive.
 */
 type RepeatTimer struct {
 	Ch chan time.Time
@@ -52,7 +53,12 @@ func (t *RepeatTimer) Reset() {
 	go t.fireRoutine(t.ticker)
 }
 
+// For ease of .Stop()'ing services before .Start()'ing them,
+// we ignore .Stop()'s on nil RepeatTimers.
 func (t *RepeatTimer) Stop() bool {
+	if t == nil {
+		return false
+	}
 	t.mtx.Lock() // Lock
 	defer t.mtx.Unlock()
 

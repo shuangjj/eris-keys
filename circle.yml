@@ -9,14 +9,14 @@ machine:
 
 dependencies:
   pre:
-    - sudo curl -L -o /usr/bin/docker 'http://s3-external-1.amazonaws.com/circle-downloads/docker-1.6.0-circleci'; chmod 0755 /usr/bin/docker; true
+    - sudo curl -L -o /usr/bin/docker 'http://s3-external-1.amazonaws.com/circle-downloads/docker-1.8.2-circleci'; chmod 0755 /usr/bin/docker; true
     - sudo service docker start
   override:
     - "cd ${GOPATH%%:*}/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} && go install"
 
 test:
   override:
-    - go test ./...
+    - go test ./eris-keys
     - docker build -t eris/keys-test -f DockerfileTest .
     - docker run -it eris/keys-test ./test.sh
 
@@ -25,9 +25,9 @@ deployment:
     branch: master
     commands:
       # Build Docker
-      - docker build -t eris/keys .
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push eris/keys
+      - docker build -t quay.io/eris/keys .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS quay.io
+      - docker push quay.io/eris/keys
 
       # Publish Documentation & Specs
       - go run docs/generator.go
@@ -42,11 +42,3 @@ deployment:
             git commit -m "eris-keys build number $CIRCLE_BUILD_NUM doc generation" &&
             git push origin master
           fi
-
-  develop:
-    branch: develop
-    commands:
-      # Build Docker
-      - docker build -t eris/keys:unstable .
-      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-      - docker push eris/keys

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"os"
-
-	"github.com/eris-ltd/eris-keys/commands"
+	"github.com/eris-ltd/eris-keys/eris-keys"
 )
 
 func main() {
-	app := commands.DefineApp()
-	app.Run(os.Args)
+	keys.Execute()
 }

@@ -141,7 +141,7 @@ func (ks keyStorePassphrase) StoreKey(key *Key, auth string) (err error) {
 		return err
 	}
 
-	// a GCM nonce may only be used once per key ever!
+	// XXX: a GCM nonce may only be used once per key ever!
 	nonce := randentropy.GetEntropyMixed(gcm.NonceSize())
 
 	// (dst, nonce, plaintext, extradata)
@@ -177,6 +177,24 @@ func (ks keyStorePassphrase) DeleteKey(keyAddr []byte, auth string) (err error) 
 	return os.RemoveAll(keyDirPath)
 }
 
+func IsEncryptedKey(ks KeyStore, keyAddr []byte) (bool, error) {
+	kspp, ok := ks.(*keyStorePassphrase)
+	if !ok {
+		return false, fmt.Errorf("only keyStorePassphrase can handle encrypted key files")
+	}
+
+	fileContent, err := GetKeyFile(kspp.keysDirPath, keyAddr)
+	if err != nil {
+		return false, err
+	}
+
+	keyProtected := new(encryptedKeyJSON)
+	if err = json.Unmarshal(fileContent, keyProtected); err != nil {
+		return false, err
+	}
+	return len(keyProtected.Crypto.CipherText) > 0, nil
+}
+
 func DecryptKey(ks keyStorePassphrase, keyAddr []byte, auth string) (*Key, error) {
 	fileContent, err := GetKeyFile(ks.keysDirPath, keyAddr)
 	if err != nil {
@@ -184,7 +202,9 @@ func DecryptKey(ks keyStorePassphrase, keyAddr []byte, auth string) (*Key, error
 	}
 
 	keyProtected := new(encryptedKeyJSON)
-	err = json.Unmarshal(fileContent, keyProtected)
+	if err = json.Unmarshal(fileContent, keyProtected); err != nil {
+		return nil, err
+	}
 
 	keyId := keyProtected.Id
 	keyType, err := KeyTypeFromString(keyProtected.Type)
