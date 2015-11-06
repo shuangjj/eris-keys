@@ -8,10 +8,22 @@ Features:
 - password based encryption (AES-GCM) with time locks
 - addressing schemes and key naming
 
-## WARNING: This is semi-audited cryptographic software. It should not yet be presumed safe. 
+## WARNING: This is semi-audited cryptographic software. It should not yet be presumed safe.  It should probably be replaced by a wrapper around gpg. The HTTP server binds localhost but does not (yet) use CORS.
 
 The code is mostly a fork of go-ethereum/crypto. Major changes include removing support for other ECDSA curves,
 adding support for ED25519, and using AES-GCM for encryption. And of course the pretty cli and http interfaces :)
+
+# Install
+
+eris-keys supports the same key/signature implementation used by bitcoin and ethereum, but [it's a C-library](https://github.com/bitcoin/secp256k1) that depends on `gmp` for big number arithmetic.
+On Mac you should be able to `brew install gmp`, on ubuntu `sudo apt-get install libgmp3-dev`.
+
+Then
+
+```
+go install github.com/eris-ltd/eris-keys
+```
+
 
 # CLI
 
