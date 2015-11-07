@@ -6,26 +6,29 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"os/user"
 	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log" // so we can flush logs on exit/ifexit
+	"github.com/mitchellh/go-homedir"
 )
 
 var (
 	// Convenience Directories
-	GoPath   = os.Getenv("GOPATH")
-	ErisLtd  = path.Join(GoPath, "src", "github.com", "eris-ltd")
-	ErisGH   = "https://github.com/eris-ltd/"
-	usr, _   = user.Current() // error?!
-	ErisRoot = ResolveErisRoot()
+	GoPath  = os.Getenv("GOPATH")
+	ErisLtd = path.Join(GoPath, "src", "github.com", "eris-ltd")
+	ErisGH  = "https://github.com/eris-ltd/"
+	// usr, _   = user.Current() // error?!
+	ErisRoot          = ResolveErisRoot()
+	ErisContainerRoot = "/home/eris/.eris" // XXX: this is used as root in the `eris/base` image
 
 	// Major Directories
 	ActionsPath        = path.Join(ErisRoot, "actions")
-	BlockchainsPath    = path.Join(ErisRoot, "blockchains")
+	BlockchainsPath    = path.Join(ErisRoot, "chains")
 	DataContainersPath = path.Join(ErisRoot, "data")
-	DappsPath          = path.Join(ErisRoot, "dapps")
+	AppsPath           = path.Join(ErisRoot, "apps")
 	FilesPath          = path.Join(ErisRoot, "files")
 	KeysPath           = path.Join(ErisRoot, "keys")
 	LanguagesPath      = path.Join(ErisRoot, "languages")
@@ -43,26 +46,26 @@ var (
 	SerpScratchPath = path.Join(ScratchPath, "ser")
 
 	// Blockchains stuff
-	ChainsConfigPath = path.Join(BlockchainsPath, "config")
-	HEAD             = path.Join(BlockchainsPath, "HEAD")
-	Refs             = path.Join(BlockchainsPath, "refs")
+	HEAD = path.Join(BlockchainsPath, "HEAD")
+	Refs = path.Join(BlockchainsPath, "refs")
 )
 
 var MajorDirs = []string{
-	ErisRoot, ActionsPath, BlockchainsPath, DataContainersPath, DappsPath, FilesPath, KeysPath, LanguagesPath, ServicesPath, KeysDataPath, KeyNamesPath, ScratchPath, EpmScratchPath, LllcScratchPath, SolcScratchPath, SerpScratchPath, ChainsConfigPath,
+	ErisRoot, ActionsPath, BlockchainsPath, DataContainersPath, AppsPath, FilesPath, KeysPath, LanguagesPath, ServicesPath, KeysDataPath, KeyNamesPath, ScratchPath, EpmScratchPath, LllcScratchPath, SolcScratchPath, SerpScratchPath,
 }
 
 //---------------------------------------------
 // user and process
 
 func Usr() string {
-	u, _ := user.Current()
-	return u.HomeDir
+	u, _ := homedir.Dir()
+	return u
 }
 
 func Exit(err error) {
 	status := 0
 	if err != nil {
+		log.Flush()
 		fmt.Println(err)
 		status = 1
 	}
@@ -71,6 +74,7 @@ func Exit(err error) {
 
 func IfExit(err error) {
 	if err != nil {
+		log.Flush()
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -88,11 +92,9 @@ func AbsolutePath(Datadir string, filename string) string {
 }
 
 func InitDataDir(Datadir string) error {
-	_, err := os.Stat(Datadir)
-	if err != nil {
+	if _, err := os.Stat(Datadir); err != nil {
 		if os.IsNotExist(err) {
-			err := os.MkdirAll(Datadir, 0777)
-			if err != nil {
+			if err := os.MkdirAll(Datadir, 0777); err != nil {
 				return err
 			}
 		}
@@ -158,7 +160,21 @@ func Copy(src, dst string) error {
 		return err
 	}
 	if f.IsDir() {
-		return copyDir(src, dst)
+		tmpDir, err := ioutil.TempDir(os.TempDir(), "eris_copy")
+		if err != nil {
+			return err
+		}
+		if err := copyDir(src, tmpDir); err != nil {
+			return err
+		}
+		if err := copyDir(tmpDir, dst); err != nil {
+			return err
+		}
+		// fi, err := os.Stat(src)
+		// if err := os.MkdirAll(dst, fi.Mode()); err != nil {
+		// 	return err
+		// }
+		// return os.Rename(tmpDir, dst)
 	}
 	return copyFile(src, dst)
 }

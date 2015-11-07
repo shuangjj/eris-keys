@@ -31,11 +31,11 @@
 		},
 		{
 			"ImportPath": "github.com/eris-ltd/common/go/common",
-			"Rev": "4efd89be9b8794df5518a5187af2a5e6fc9ebed9"
+			"Rev": "d399c3ccd993184a393056fcaedd8d1be4e772ad"
 		},
 		{
 			"ImportPath": "github.com/eris-ltd/common/go/log",
-			"Rev": "4efd89be9b8794df5518a5187af2a5e6fc9ebed9"
+			"Rev": "d399c3ccd993184a393056fcaedd8d1be4e772ad"
 		},
 		{
 			"ImportPath": "github.com/howeyc/gopass",

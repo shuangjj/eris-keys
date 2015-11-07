@@ -36,7 +36,7 @@ var (
 
 	/* flag vars */
 	//global
-	LogLevel int
+	logLevel int
 	KeysDir  string
 	KeyName  string
 	KeyAddr  string
@@ -167,7 +167,7 @@ var importCmd = &cobra.Command{
 }
 
 func addKeysFlags() {
-	EKeys.PersistentFlags().IntVarP(&LogLevel, "log", "l", 0, "specify the location of the directory containing key files")
+	EKeys.PersistentFlags().IntVarP(&logLevel, "log", "l", 0, "specify the location of the directory containing key files")
 	EKeys.PersistentFlags().StringVarP(&KeysDir, "dir", "", DefaultDir, "specify the location of the directory containing key files")
 	EKeys.PersistentFlags().StringVarP(&KeyName, "name", "", "", "name of key to use")
 	EKeys.PersistentFlags().StringVarP(&KeyAddr, "addr", "", "", "address of key to use")
@@ -199,7 +199,23 @@ func checkMakeDataDir(dir string) error {
 }
 
 func before(cmd *cobra.Command, args []string) {
-	log.SetLoggers(LogLevel, os.Stdout, os.Stderr)
+	var l log.LogLevel
+	// ugly hack. TODO: fix (csk)
+	switch logLevel {
+	case 0:
+		l = 0
+	case 1:
+		l = 1
+	case 2:
+		l = 2
+	case 3:
+		l = 3
+	case 4:
+		l = 4
+	case 5:
+		l = 5
+	}
+	log.SetLoggers(l, os.Stdout, os.Stderr)
 
 	DaemonAddr = fmt.Sprintf("http://%s:%s", KeyHost, KeyPort)
 }
