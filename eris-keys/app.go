@@ -63,13 +63,13 @@ var EKeys = &cobra.Command{
 }
 
 func Execute() {
-	buildKeysCommand()
+	BuildKeysCommand()
 	EKeys.PersistentPreRun = before
 	EKeys.PersistentPostRun = after
 	EKeys.Execute()
 }
 
-func buildKeysCommand() {
+func BuildKeysCommand() {
 	nameCmd.AddCommand(nameRmCmd, nameLsCmd)
 
 	EKeys.AddCommand(keygenCmd)

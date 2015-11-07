@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	commands "github.com/eris-ltd/eris-keys/eris-keys"
 	"github.com/eris-ltd/eris-keys/version"
@@ -25,8 +26,9 @@ title:      "Documentation | eris:keys | {{}}"
 `
 
 func main() {
-	os.MkdirAll(RENDER_DIR, 0775)
+	os.MkdirAll(RENDER_DIR, 0755)
 	eris := commands.EKeys
+	commands.BuildKeysCommand()
 	specs := common.GenerateSpecs(SPECS_DIR, RENDER_DIR, FRONT_MATTER)
-	common.GenerateTree(epm, RENDER_DIR, specs, FRONT_MATTER, BASE_URL)
+	common.GenerateTree(eris, RENDER_DIR, specs, FRONT_MATTER, BASE_URL)
 }
