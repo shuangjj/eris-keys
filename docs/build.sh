@@ -28,7 +28,7 @@ go run docs/generator.go
 if [[ "$1" == "master" ]]
 then
   mkdir -p docs/$base_name/latest
-  rsync -av docs/$base_name/$release_min docs/$base_name/latest
+  rsync -av docs/$base_name/$release_min/ docs/$base_name/latest/
 fi
 
 cd $HOME
