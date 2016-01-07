@@ -21,7 +21,7 @@ On Mac you should be able to `brew install gmp`, on ubuntu `sudo apt-get install
 Then
 
 ```
-go install github.com/eris-ltd/eris-keys
+go get github.com/eris-ltd/eris-keys
 ```
 
 
@@ -86,7 +86,7 @@ Use a `--name` instead of the `--addr`:
 
 Use the `eris-keys name` command to change names, remove them, or list them.
 
-## More 
+## More
 
 Run `eris-keys` or `eris-keys <cmd> --help` for more.
 
@@ -97,7 +97,7 @@ Start the daemon with `eris-keys --host localhost --port 12345 server`
 The endpoints:
 
 ### Generate keys
-`/gen` 
+`/gen`
 	- Args: `auth`, `type`, `name`
 	- Return:  newly generated address
 
