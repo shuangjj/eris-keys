@@ -82,6 +82,7 @@ func BuildKeysCommand() {
 	EKeys.AddCommand(hashCmd)
 	EKeys.AddCommand(serverCmd)
 	EKeys.AddCommand(importCmd)
+	EKeys.AddCommand(convertCmd)
 	addKeysFlags()
 }
 
@@ -147,6 +148,14 @@ var verifyCmd = &cobra.Command{
 	Long:  "eris-keys verify --addr <addr> <hash> <sig>",
 	Run:   cliVerify,
 }
+
+var convertCmd = &cobra.Command{
+	Use:   "convert",
+	Short: "eris-keys convert --addr <address>",
+	Long:  "eris-keys convert --addr <address>",
+	Run:   cliConvert,
+}
+
 var hashCmd = &cobra.Command{
 	Use:   "hash",
 	Short: "eris-keys hash <some data>",
