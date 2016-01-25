@@ -16,7 +16,7 @@ RUN go install
 
 # set the repo and install mint-client
 ENV REPOSITORY github.com/eris-ltd/mint-client
-ENV BRANCH develop
+ENV BRANCH master
 RUN mkdir --parents $GOPATH/src/$REPOSITORY
 WORKDIR $GOPATH/src/$REPOSITORY
 RUN git clone --quiet https://$REPOSITORY . && \
