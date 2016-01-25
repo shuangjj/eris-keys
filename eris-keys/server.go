@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	mintkey "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/mint-client/mintkey/core"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/rs/cors"
 )
 
@@ -112,22 +111,23 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func convertMintHandler(w http.ResponseWriter, r *http.Request) {
-	_, auth, args, err := typeAuthArgs(r)
+	_, _, args, err := typeAuthArgs(r)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	addr, name, timeout := args["addr"], args["name"], args["timeout"]
+	addr, name := args["addr"], args["name"]
 	addr, err = getNameAddr(name, addr)
 	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	if err := mintkey.CoreConvertErisKeyToPrivValidator([]byte(addr)); err != nil {
+	key, err := coreConvert(addr)
+	if err != nil {
 		WriteError(w, err)
 		return
 	}
-	WriteResult(w, fmt.Sprintf("%X", addr))
+	WriteResult(w, fmt.Sprintf("%X", key))
 }
 
 func lockHandler(w http.ResponseWriter, r *http.Request) {

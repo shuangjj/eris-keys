@@ -43,7 +43,7 @@ func cliLock(cmd *cobra.Command, args []string) {
 	logger.Println(r)
 }
 
-func cliLock(cmd *cobra.Command, args []string) {
+func cliConvert(cmd *cobra.Command, args []string) {
 	r, err := Call("mint", map[string]string{"addr": KeyAddr, "name": KeyName})
 	if _, ok := err.(ErrConnectionRefused); ok {
 		ExitConnectErr(err)
