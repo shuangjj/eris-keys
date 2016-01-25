@@ -127,7 +127,7 @@ func convertMintHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, err)
 		return
 	}
-	WriteResult(w, fmt.Sprintf("%X", key))
+	WriteResult(w, string(key))
 }
 
 func lockHandler(w http.ResponseWriter, r *http.Request) {
