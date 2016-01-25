@@ -33,6 +33,10 @@
 			"Rev": "d399c3ccd993184a393056fcaedd8d1be4e772ad"
 		},
 		{
+			"ImportPath": "github.com/eris-ltd/mint-client/mintkey/core",
+			"Rev": "792dd51ff7bb5026a7af11615b6ead396098c83a"
+		},
+		{
 			"ImportPath": "github.com/howeyc/gopass",
 			"Rev": "2c70fa70727c953c51695f800f25d6b44abb368e"
 		},

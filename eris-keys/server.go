@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	mintkey "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/mint-client/mintkey/core"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/rs/cors"
 )
 
@@ -35,6 +36,7 @@ func StartServer(host, port string) error {
 	mux.HandleFunc("/name/rm", nameRmHandler)
 	mux.HandleFunc("/unlock", unlockHandler)
 	mux.HandleFunc("/lock", lockHandler)
+	mux.HandleFunc("/mint", convertMintHandler)
 
 	logger.Infof("Starting eris-keys server on %s:%s\n", host, port)
 	c := cors.New(cors.Options{
@@ -107,6 +109,25 @@ func unlockHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	WriteResult(w, fmt.Sprintf("%s unlocked", addr))
+}
+
+func convertMintHandler(w http.ResponseWriter, r *http.Request) {
+	_, auth, args, err := typeAuthArgs(r)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	addr, name, timeout := args["addr"], args["name"], args["timeout"]
+	addr, err = getNameAddr(name, addr)
+	if err != nil {
+		WriteError(w, err)
+		return
+	}
+	if err := mintkey.CoreConvertErisKeyToPrivValidator([]byte(addr)); err != nil {
+		WriteError(w, err)
+		return
+	}
+	WriteResult(w, fmt.Sprintf("%X", addr))
 }
 
 func lockHandler(w http.ResponseWriter, r *http.Request) {
