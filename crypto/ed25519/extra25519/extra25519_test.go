@@ -9,8 +9,8 @@ import (
 	"crypto/rand"
 	"testing"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go.crypto/curve25519"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/agl/ed25519"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/curve25519"
 )
 
 func TestCurve25519Conversion(t *testing.T) {

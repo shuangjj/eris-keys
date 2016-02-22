@@ -31,11 +31,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/ed25519"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
+	"github.com/eris-ltd/eris-keys/crypto/ed25519"
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
 	"github.com/eris-ltd/eris-keys/crypto/secp256k1"
+
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/account"
+	uuid "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid"
 )
 
 type InvalidCurveErr string
@@ -246,7 +247,7 @@ type encryptedKeyJSON struct {
 
 func (k *Key) MarshalJSON() (j []byte, err error) {
 	jStruct := plainKeyJSON{
-		k.Id,
+		[]byte(k.Id.String()),
 		k.Type.String(),
 		fmt.Sprintf("%X", k.Address),
 		k.PrivateKey,
@@ -266,9 +267,11 @@ func (k *Key) UnmarshalJSON(j []byte) (err error) {
 		return NoPrivateKeyErr("")
 	}
 
-	u := new(uuid.UUID)
-	*u = keyJSON.Id
-	k.Id = *u
+	u, err := uuid.Parse(string(keyJSON.Id))
+	if err != nil {
+		return err
+	}
+	k.Id = u
 	k.Address, err = hex.DecodeString(keyJSON.Address)
 	if err != nil {
 		return err
@@ -303,8 +306,9 @@ func IsValidKeyJson(j []byte) []byte {
 
 func newKeySecp256k1(addrType AddrType) *Key {
 	pub, priv := secp256k1.GenerateKeyPair()
+	id, _ := uuid.NewRandom()
 	return &Key{
-		Id:         uuid.NewRandom(),
+		Id:         id,
 		Type:       KeyType{CurveTypeSecp256k1, addrType},
 		Address:    AddressFromPub(addrType, pub),
 		PrivateKey: priv,
@@ -322,8 +326,9 @@ func keyFromPrivSecp256k1(addrType AddrType, priv []byte) (*Key, error) {
 	if err != nil {
 		return nil, err
 	}
+	id, _ := uuid.NewRandom()
 	return &Key{
-		Id:         uuid.NewRandom(),
+		Id:         id,
 		Type:       KeyType{CurveTypeSecp256k1, addrType},
 		Address:    AddressFromPub(addrType, pub),
 		PrivateKey: priv,
@@ -335,8 +340,9 @@ func keyFromPrivEd25519(addrType AddrType, priv []byte) (*Key, error) {
 	copy(privKeyBytes[:32], priv)
 	pubKeyBytes := ed25519.MakePublicKey(privKeyBytes)
 	pubKey := account.PubKeyEd25519(*pubKeyBytes)
+	id, _ := uuid.NewRandom()
 	return &Key{
-		Id:         uuid.NewRandom(),
+		Id:         id,
 		Type:       KeyType{CurveTypeEd25519, addrType},
 		Address:    pubKey.Address(),
 		PrivateKey: privKeyBytes[:],

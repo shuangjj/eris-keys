@@ -24,7 +24,7 @@ func main() {
     // cors.Default() setup the middleware with default options being
     // all origins accepted with simple methods (GET, POST). See
     // documentation below for more options.
-    handler := cors.Default().Handler(h)
+    handler = cors.Default().Handler(h)
     http.ListenAndServe(":8080", handler)
 }
 ```
@@ -71,7 +71,6 @@ handler = c.Handler(handler)
 ```
 
 * **AllowedOrigins** `[]string`: A list of origins a cross-domain request can be executed from. If the special `*` value is present in the list, all origins will be allowed. The default value is `*`.
-* **AllowOriginFunc** `func (origin string) bool`: A custom function to validate the origin. It take the origin as argument and returns true if allowed or false otherwise. If this option is set, the content of `AllowedOrigins` is ignored
 * **AllowedMethods** `[]string`: A list of methods the client is allowed to use with cross-domain requests.
 * **AllowedHeaders** `[]string`: A list of non simple headers the client is allowed to use with cross-domain requests. Default value is simple methods (`GET` and `POST`)
 * **ExposedHeaders** `[]string`: Indicates which headers are safe to expose to the API of a CORS API specification
@@ -79,17 +78,6 @@ handler = c.Handler(handler)
 * **MaxAge** `int`: Indicates how long (in seconds) the results of a preflight request can be cached. The default is `0` which stands for no max age.
 
 See [API documentation](http://godoc.org/github.com/rs/cors) for more info.
-
-## Benchmarks
-
-    BenchmarkWithout          20000000    64.6 ns/op      8 B/op    1 allocs/op
-    BenchmarkDefault          3000000      469 ns/op    114 B/op    2 allocs/op
-    BenchmarkAllowedOrigin    3000000      608 ns/op    114 B/op    2 allocs/op
-    BenchmarkPreflight        20000000    73.2 ns/op      0 B/op    0 allocs/op
-    BenchmarkPreflightHeader  20000000    73.6 ns/op      0 B/op    0 allocs/op
-    BenchmarkParseHeaderList  2000000      847 ns/op    184 B/op    6 allocs/op
-    BenchmarkParse…Single     5000000      290 ns/op     32 B/op    3 allocs/op
-    BenchmarkParse…Normalized 2000000      776 ns/op    160 B/op    6 allocs/op
 
 ## Licenses
 

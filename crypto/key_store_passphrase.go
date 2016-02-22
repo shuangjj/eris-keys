@@ -84,7 +84,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/code.google.com/p/go-uuid/uuid"
+	uuid "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/scrypt" // 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
 	"github.com/eris-ltd/eris-keys/crypto/randentropy"
 )
@@ -153,7 +153,7 @@ func (ks keyStorePassphrase) StoreKey(key *Key, auth string) (err error) {
 		cipherText,
 	}
 	keyStruct := encryptedKeyJSON{
-		key.Id,
+		[]byte(key.Id.String()),
 		key.Type.String(),
 		strings.ToUpper(hex.EncodeToString(key.Address)),
 		cipherStruct,
@@ -231,9 +231,13 @@ func DecryptKey(ks keyStorePassphrase, keyAddr []byte, auth string) (*Key, error
 	}
 
 	// no need to use a checksum as done by gcm
+	id, err := uuid.Parse(string(keyId))
+	if err != nil {
+		return nil, err
+	}
 
 	return &Key{
-		Id:         uuid.UUID(keyId),
+		Id:         id,
 		Type:       keyType,
 		Address:    keyAddr,
 		PrivateKey: plainText,

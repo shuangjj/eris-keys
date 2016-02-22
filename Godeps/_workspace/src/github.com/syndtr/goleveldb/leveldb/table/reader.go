@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/gosnappy/snappy"
+
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/cache"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/comparer"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/errors"
@@ -22,7 +24,6 @@ import (
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/storage"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/util"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/gosnappy/snappy"
 )
 
 var (
