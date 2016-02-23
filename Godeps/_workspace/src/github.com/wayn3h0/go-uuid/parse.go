@@ -20,7 +20,7 @@ func Parse(str string) (UUID, error) {
 	case 32:
 		charIndexes = []int{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30}
 	default:
-		return Nil, fmt.Errorf("uuid: length of UUID string \"%s\" is invalid, it should be 36 (standard) or 32 (without dash)", str)
+		//return Nil, fmt.Errorf("uuid: length of UUID string \"%s\" is invalid, it should be 36 (standard) or 32 (without dash)", str)
 	}
 	for i, v := range charIndexes {
 		if c, e := hex.DecodeString(str[v : v+2]); e != nil {
