@@ -9,8 +9,8 @@ import (
 
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
 	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/account"
-	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/tendermint/wire"
+	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/account"
+	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/wire"
 	"github.com/eris-ltd/eris-keys/crypto"
 )
 
@@ -107,8 +107,8 @@ type hashInfo struct {
 }
 
 var hashData = map[string]hashInfo{
-	"sha256":    hashInfo{"hi", "8F434346648F6B96DF89DDA901C5176B10A6D83961DD3C1AC88B59B2DC327AA4"},
-	"ripemd160": hashInfo{"hi", "242485AB6BFD3502BCB3442EA2E211687B8E4D89"},
+	"sha256":    {"hi", "8F434346648F6B96DF89DDA901C5176B10A6D83961DD3C1AC88B59B2DC327AA4"},
+	"ripemd160": {"hi", "242485AB6BFD3502BCB3442EA2E211687B8E4D89"},
 }
 
 func TestHash(t *testing.T) {
