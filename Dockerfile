@@ -1,5 +1,5 @@
 # TODO - build eris/base
-FROM quay.io/eris/base:latest
+FROM chainlex/eris-base:latest
 
 MAINTAINER Eris Industries <support@erisindustries.com>
 
@@ -25,6 +25,7 @@ RUN git clone --quiet https://$REPOSITORY . && \
   mv $GOPATH/bin/mintkey /usr/local/bin
 
 USER $USER
+ENV HOME "/home/eris/"
 ENV DATA "/home/eris/.eris/keys"
 RUN mkdir -p $DATA
 RUN chown -R $USER:$USER $DATA
