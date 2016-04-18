@@ -1,7 +1,7 @@
 package uuid
 
 import (
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid/internal/namebased"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid/internal/namebased"
 )
 
 // Imports namespaces.

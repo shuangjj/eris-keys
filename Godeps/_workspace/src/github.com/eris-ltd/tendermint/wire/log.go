@@ -1,8 +1,8 @@
 package wire
 
 import (
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/logger"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/log15"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/logger"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/tendermint/log15"
 )
 
 var log = logger.New("module", "binary")

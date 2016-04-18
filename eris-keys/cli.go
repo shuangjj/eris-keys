@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+	. "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/common/go/common"
 
 	//"github.com/howeyc/gopass"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/spf13/cobra"
 )
 
 func ExitConnectErr(err error) {

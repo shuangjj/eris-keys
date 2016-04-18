@@ -10,16 +10,16 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log" // so we can flush logs on exit/ifexit
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/mitchellh/go-homedir"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/common/go/log" // so we can flush logs on exit/ifexit
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/mitchellh/go-homedir"
 )
 
 var (
 	// Convenience Directories
 	GoPath            = os.Getenv("GOPATH")
-	ErisLtd           = filepath.Join(GoPath, "src", "github.com", "eris-ltd") // CSK: to deprecate
-	ErisGo            = filepath.Join(GoPath, "src", "github.com", "eris-ltd") // CSK: to keep
-	ErisGH            = "https://github.com/eris-ltd/"
+	ErisLtd           = filepath.Join(GoPath, "src", "github.com", "shuangjj") // CSK: to deprecate
+	ErisGo            = filepath.Join(GoPath, "src", "github.com", "shuangjj") // CSK: to keep
+	ErisGH            = "https://github.com/shuangjj/"
 	ErisRoot          = ResolveErisRoot()
 	ErisContainerRoot = "/home/eris/.eris" // XXX: this is used as root in the `eris/base` image
 

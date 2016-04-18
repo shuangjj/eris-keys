@@ -8,14 +8,14 @@ RUN apt-get update && \
     libgmp3-dev && \
   rm -rf /var/lib/apt/lists/*
 
-ENV REPOSITORY "github.com/eris-ltd/eris-keys"
+ENV REPOSITORY "github.com/shuangjj/eris-keys"
 COPY . /go/src/$REPOSITORY/
 WORKDIR /go/src/$REPOSITORY/
 RUN chown -R $USER:$USER ./
 RUN go install
 
 # set the repo and install mint-client
-ENV REPOSITORY github.com/eris-ltd/mint-client
+ENV REPOSITORY github.com/shuangjj/mint-client
 ENV BRANCH master
 RUN mkdir --parents $GOPATH/src/$REPOSITORY
 WORKDIR $GOPATH/src/$REPOSITORY

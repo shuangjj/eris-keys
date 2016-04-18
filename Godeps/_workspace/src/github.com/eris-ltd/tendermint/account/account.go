@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io"
 
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/common"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/merkle"
-	ptypes "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/permission/types"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/wire"
+	. "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/common"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/merkle"
+	ptypes "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/permission/types"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/wire"
 )
 
 // Signable is an interface for all signable things.

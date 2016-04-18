@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eris-ltd/eris-keys/crypto"
+	"github.com/shuangjj/eris-keys/crypto"
 )
 
 type Manager struct {

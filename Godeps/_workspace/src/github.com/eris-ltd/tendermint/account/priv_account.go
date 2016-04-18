@@ -1,9 +1,9 @@
 package account
 
 import (
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/common"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/wire"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/tendermint/ed25519"
+	. "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/common"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/wire"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/tendermint/ed25519"
 )
 
 type PrivAccount struct {

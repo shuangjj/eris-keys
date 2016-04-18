@@ -5,9 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/ripemd160"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/ripemd160"
 
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/common"
+	. "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/common"
 )
 
 func BinaryBytes(o interface{}) []byte {

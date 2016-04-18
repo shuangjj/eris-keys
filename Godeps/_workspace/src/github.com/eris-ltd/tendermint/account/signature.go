@@ -3,8 +3,8 @@ package account
 import (
 	"fmt"
 
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/common"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/wire"
+	. "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/common"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/wire"
 )
 
 // Signature is a part of Txs and consensus Votes.

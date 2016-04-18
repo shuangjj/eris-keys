@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/eris-ltd/eris-keys",
+	"ImportPath": "github.com/shuangjj/eris-keys",
 	"GoVersion": "go1.5",
 	"Packages": [
 		"./..."
@@ -24,50 +24,50 @@
 			"Rev": "71acacd42f85e5e82f70a55327789582a5200a90"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/common/go/common",
+			"ImportPath": "github.com/shuangjj/common/go/common",
 			"Rev": "26df169480eef97df7ed9f5419b7367895d077b4"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/common/go/log",
+			"ImportPath": "github.com/shuangjj/common/go/log",
 			"Rev": "26df169480eef97df7ed9f5419b7367895d077b4"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/account",
+			"ImportPath": "github.com/shuangjj/tendermint/account",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/common",
+			"ImportPath": "github.com/shuangjj/tendermint/common",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/config",
+			"ImportPath": "github.com/shuangjj/tendermint/config",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/db",
+			"ImportPath": "github.com/shuangjj/tendermint/db",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/logger",
+			"ImportPath": "github.com/shuangjj/tendermint/logger",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/merkle",
+			"ImportPath": "github.com/shuangjj/tendermint/merkle",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/permission/types",
+			"ImportPath": "github.com/shuangjj/tendermint/permission/types",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},
 		{
-			"ImportPath": "github.com/eris-ltd/tendermint/wire",
+			"ImportPath": "github.com/shuangjj/tendermint/wire",
 			"Comment": "0.1-66-g635ad92",
 			"Rev": "635ad928efbd9132d880b9568e8a261a876afcfd"
 		},

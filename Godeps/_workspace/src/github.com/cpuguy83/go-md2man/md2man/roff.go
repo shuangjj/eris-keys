@@ -6,7 +6,7 @@ import (
 	"html"
 	"strings"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/russross/blackfriday"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/russross/blackfriday"
 )
 
 type roffRenderer struct{}

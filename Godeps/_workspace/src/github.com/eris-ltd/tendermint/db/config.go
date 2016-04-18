@@ -1,7 +1,7 @@
 package db
 
 import (
-	cfg "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/config"
+	cfg "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/config"
 )
 
 var config cfg.Config = nil

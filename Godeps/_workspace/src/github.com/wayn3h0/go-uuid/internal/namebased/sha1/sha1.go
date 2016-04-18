@@ -3,8 +3,8 @@ package sha1
 import (
 	"crypto/sha1"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid/internal/layout"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid/internal/version"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid/internal/layout"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid/internal/version"
 )
 
 // New returns a new name-based uses SHA-1 hashing uuid.

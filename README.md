@@ -21,7 +21,7 @@ On Mac you should be able to `brew install gmp`, on ubuntu `sudo apt-get install
 Then
 
 ```
-go get github.com/eris-ltd/eris-keys
+go get github.com/shuangjj/eris-keys
 ```
 
 

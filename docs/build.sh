@@ -4,7 +4,7 @@
 # Set vars (change if used in another repo)
 
 base_name=eris-keys
-user_name=eris-ltd
+user_name=shuangjj
 docs_site=docs.erisindustries.com
 
 # -------------------------------------------------------------------

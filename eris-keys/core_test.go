@@ -7,11 +7,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/log"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/account"
-	_ "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/wire"
-	"github.com/eris-ltd/eris-keys/crypto"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/common/go/common"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/common/go/log"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/account"
+	_ "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/wire"
+	"github.com/shuangjj/eris-keys/crypto"
 )
 
 var (

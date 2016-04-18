@@ -12,7 +12,7 @@ RUN apt-get update && \
     libgmp3-dev openssl jq bsdmainutils && \
   rm -rf /var/lib/apt/lists/*
 
-ENV REPOSITORY "github.com/eris-ltd/eris-keys"
+ENV REPOSITORY "github.com/shuangjj/eris-keys"
 COPY . /go/src/$REPOSITORY/
 WORKDIR /go/src/$REPOSITORY/
 

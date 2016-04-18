@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	commands "github.com/eris-ltd/eris-keys/eris-keys"
-	"github.com/eris-ltd/eris-keys/version"
+	commands "github.com/shuangjj/eris-keys/eris-keys"
+	"github.com/shuangjj/eris-keys/version"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/common/go/common"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/common/go/common"
 )
 
 var RENDER_DIR = fmt.Sprintf("./docs/eris-keys/%s/", version.VERSION)

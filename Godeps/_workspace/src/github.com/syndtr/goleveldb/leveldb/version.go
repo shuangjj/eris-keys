@@ -10,9 +10,9 @@ import (
 	"sync/atomic"
 	"unsafe"
 
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/iterator"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/opt"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/util"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/iterator"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/util"
 )
 
 type tSet struct {

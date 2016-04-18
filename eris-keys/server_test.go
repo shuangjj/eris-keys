@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/eris-ltd/eris-keys/crypto"
+	"github.com/shuangjj/eris-keys/crypto"
 )
 
 // start the server

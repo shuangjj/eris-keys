@@ -84,9 +84,9 @@ import (
 	"path"
 	"strings"
 
-	uuid "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/scrypt" // 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
-	"github.com/eris-ltd/eris-keys/crypto/randentropy"
+	uuid "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/wayn3h0/go-uuid"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/golang.org/x/crypto/scrypt" // 2^18 / 8 / 1 uses 256MB memory and approx 1s CPU time on a modern CPU.
+	"github.com/shuangjj/eris-keys/crypto/randentropy"
 )
 
 const (

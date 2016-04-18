@@ -2,12 +2,12 @@ package db
 
 import (
 	"fmt"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/errors"
+	"github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/syndtr/goleveldb/leveldb/opt"
 	"path"
 
-	. "github.com/eris-ltd/eris-keys/Godeps/_workspace/src/github.com/eris-ltd/tendermint/common"
+	. "github.com/shuangjj/eris-keys/Godeps/_workspace/src/github.com/shuangjj/tendermint/common"
 )
 
 type LevelDB struct {
