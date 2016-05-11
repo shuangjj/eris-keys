@@ -30,6 +30,7 @@ RUN mkdir -p $DATA
 RUN chown -R $USER:$USER $DATA
 
 # Final Config
+WORKDIR /home/$USER/.eris
 VOLUME $DATA
 EXPOSE 4767
 CMD ["eris-keys", "server", "--host", "0.0.0.0", "--log", "3"]
