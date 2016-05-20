@@ -24,3 +24,6 @@ _testmain.go
 *.prof
 *.*~
 docs/eris-keys
+
+# Temporary / cached
+*.swp
