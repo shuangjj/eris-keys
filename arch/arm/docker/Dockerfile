@@ -1,5 +1,5 @@
 # TODO - build eris/base
-FROM eris4iot/base:armhf
+FROM quay.io/eris/base:arm
 
 MAINTAINER Eris Industries <support@erisindustries.com>
 
