@@ -1,12 +1,7 @@
 # TODO - build eris/base
-FROM quay.io/eris/base:ubuntu
+FROM quay.io/eris/build
 
 MAINTAINER Eris Industries <support@erisindustries.com>
-
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends \
-    libgmp3-dev && \
-  rm -rf /var/lib/apt/lists/*
 
 ENV REPOSITORY "github.com/eris-ltd/eris-keys"
 COPY . /go/src/$REPOSITORY/
@@ -17,7 +12,7 @@ RUN go install
 # set the repo and install mint-client
 ENV REPOSITORY github.com/eris-ltd/mint-client
 ENV BRANCH master
-RUN mkdir --parents $GOPATH/src/$REPOSITORY
+RUN mkdir -p $GOPATH/src/$REPOSITORY
 WORKDIR $GOPATH/src/$REPOSITORY
 RUN git clone --quiet https://$REPOSITORY . && \
   git checkout --quiet $BRANCH && \
