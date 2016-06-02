@@ -1,16 +1,7 @@
 # TODO - build eris/base
-FROM quay.io/eris/base:ubuntu
+FROM quay.io/eris/build
 
 MAINTAINER Eris Industries <support@erisindustries.com>
-
-# we install additional utilities for testing
-# jq for parsing json
-# bsmainutils for hexdump (converting base64 to hex)
-# openssl for checking hashes
-RUN apt-get update && \
-  apt-get install -y --no-install-recommends \
-    libgmp3-dev openssl jq bsdmainutils && \
-  rm -rf /var/lib/apt/lists/*
 
 ENV REPOSITORY "github.com/eris-ltd/eris-keys"
 COPY . /go/src/$REPOSITORY/
