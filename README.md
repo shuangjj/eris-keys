@@ -1,4 +1,9 @@
-# eris-keys
+|[![GoDoc](https://godoc.org/github.com/eris-keys?status.png)](https://godoc.org/github.com/eris-ltd/eris-keys) | Linux |
+|---|-------|
+| Master | [![Circle CI](https://circleci.com/gh/eris-ltd/eris-keys/tree/master.svg?style=svg)](https://circleci.com/gh/eris-ltd/eris-keys/tree/master) |
+| Develop | [![Circle CI](https://circleci.com/gh/eris-ltd/eris-keys/tree/develop.svg?style=svg)](https://circleci.com/gh/eris-ltd/eris-keys/tree/develop) | 
+
+# Eris Keys
 
 A simple tool for generating keys, producing and verifying signatures.
 
@@ -15,7 +20,11 @@ adding support for ED25519, and using AES-GCM for encryption. And of course the 
 
 # Install
 
-eris-keys supports the same key/signature implementation used by bitcoin and ethereum, but [it's a C-library](https://github.com/bitcoin/secp256k1) that depends on `gmp` for big number arithmetic.
+`eris-keys` is intended to be used an eris service with [eris-cli](https://github.com/eris-ltd/eris-cli), e.g., `eris services start keys`.
+
+## For Developers
+
+`eris-keys` supports the same key/signature implementation used by bitcoin and ethereum, but [it's a C-library](https://github.com/bitcoin/secp256k1) that depends on `gmp` for big number arithmetic.
 On Mac you should be able to `brew install gmp`, on ubuntu `sudo apt-get install libgmp3-dev`.
 
 Then
@@ -23,7 +32,6 @@ Then
 ```
 go get github.com/eris-ltd/eris-keys
 ```
-
 
 # CLI
 
